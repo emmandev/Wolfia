@@ -23,6 +23,7 @@ import net.dv8tion.jda.core.entities.Guild;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.sqlsauce.entities.discord.DiscordGuild;
 import space.npstr.sqlsauce.entities.discord.DiscordUser;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
@@ -62,7 +63,7 @@ public class SyncCommand extends BaseCommand implements IOwnerRestricted {
 
     public SyncCommand(@Nonnull final String name, @Nonnull final String... aliases) {
         super(name, aliases);
-        final int databasePoolSize = Wolfia.getDatabase().getConnection().getMaxPoolSize();
+        final int databasePoolSize = Launcher.getBotContext().getDatabase().getConnection().getMaxPoolSize();
         final int workers = Math.max(1, databasePoolSize / 2);//dont hog the database
         this.syncService = Executors.newFixedThreadPool(workers,
                 runnable -> new Thread(runnable, "sync-command-worker"));
@@ -117,7 +118,7 @@ public class SyncCommand extends BaseCommand implements IOwnerRestricted {
         final AtomicInteger count = new AtomicInteger(0);
         executor.execute(() -> {
             final Collection<DatabaseException> guildSyncDbExceptions = DiscordGuild.sync(
-                    Wolfia.getDatabase().getWrapper(),
+                    Launcher.getBotContext().getDatabase().getWrapper(),
                     guilds.peek(__ -> count.incrementAndGet()),
                     (guildId) -> Wolfia.getGuildById(guildId) != null,
                     CachedGuild.class
@@ -148,7 +149,7 @@ public class SyncCommand extends BaseCommand implements IOwnerRestricted {
                 log.info("Caching users for shard {} started", jda.getShardInfo().getShardId());
                 //sync user cache
                 final Collection<DatabaseException> userCacheDbExceptions = DiscordUser.cacheAll(
-                        Wolfia.getDatabase().getWrapper(),
+                        Launcher.getBotContext().getDatabase().getWrapper(),
                         jda.getGuildCache().stream()
                                 .flatMap(guild -> guild.getMemberCache().stream())
                                 .peek(__ -> count.incrementAndGet()),

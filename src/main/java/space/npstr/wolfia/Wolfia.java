@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.JDAInfo;
 import net.dv8tion.jda.core.entities.Game;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.SelfUser;
@@ -39,10 +38,10 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.sqlsauce.DatabaseException;
+import space.npstr.sqlsauce.DatabaseWrapper;
 import space.npstr.sqlsauce.jda.listeners.GuildCachingListener;
 import space.npstr.sqlsauce.jda.listeners.UserMemberCachingListener;
 import space.npstr.wolfia.commands.debug.SyncCommand;
-import space.npstr.wolfia.db.Database;
 import space.npstr.wolfia.db.entities.CachedGuild;
 import space.npstr.wolfia.db.entities.CachedUser;
 import space.npstr.wolfia.db.entities.PrivateGuild;
@@ -52,7 +51,6 @@ import space.npstr.wolfia.events.WolfiaGuildListener;
 import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.tools.ExceptionLoggingExecutor;
 import space.npstr.wolfia.listings.Listings;
-import space.npstr.wolfia.utils.GitRepoState;
 import space.npstr.wolfia.utils.discord.Emojis;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
 import space.npstr.wolfia.utils.log.DiscordLogger;
@@ -90,25 +88,11 @@ public class Wolfia {
 
     private static boolean started = false;
     private static CommandListener commandListener;
-    private static Database database;
 
     //set up things that are crucial
     //if something fails exit right away
     public static void main(final String[] args) throws InterruptedException {
-        //just post the info to the console
-        if (args.length > 0 &&
-                (args[0].equalsIgnoreCase("-v")
-                        || args[0].equalsIgnoreCase("--version")
-                        || args[0].equalsIgnoreCase("-version"))) {
-            System.out.println("Version flag detected. Printing version info, then exiting.");
-            System.out.println(getVersionInfo());
-            System.out.println("Version info printed, exiting.");
-            return;
-        }
-
         Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
-
-        log.info(getVersionInfo());
 
         //add webhookURI to Discord log appender
         if (Config.C.errorLogWebHook != null && !"".equals(Config.C.errorLogWebHook)) {
@@ -123,16 +107,13 @@ public class Wolfia {
         else
             log.info("Running PRODUCTION configuration");
 
-        //set up relational database
-        database = new Database();
-
         //try connecting in a reasonable timeframe
         boolean dbConnected = false;
         final long dbConnectStarted = System.currentTimeMillis();
         do {
             try {
                 //noinspection ResultOfMethodCallIgnored
-                database.getWrapper().selectSqlQuery("SELECT 1;", null);
+                Launcher.getBotContext().getDatabase().getWrapper().selectSqlQuery("SELECT 1;", null);
                 dbConnected = true;
                 log.info("Initial db connection succeeded");
             } catch (final Exception e) {
@@ -146,8 +127,9 @@ public class Wolfia {
             System.exit(2);
         }
 
+        final DatabaseWrapper wrapper = Launcher.getBotContext().getDatabase().getWrapper();
         try {
-            AVAILABLE_PRIVATE_GUILD_QUEUE.addAll(getDatabase().getWrapper().selectJpqlQuery("FROM PrivateGuild", null, PrivateGuild.class));
+            AVAILABLE_PRIVATE_GUILD_QUEUE.addAll(wrapper.selectJpqlQuery("FROM PrivateGuild", null, PrivateGuild.class));
             log.info("{} private guilds loaded", AVAILABLE_PRIVATE_GUILD_QUEUE.size());
         } catch (final DatabaseException e) {
             log.error("Failed to load private guilds, exiting", e);
@@ -177,8 +159,8 @@ public class Wolfia {
                     .setGame(Game.playing(App.GAME_STATUS))
                     .addEventListeners(commandListener)
                     .addEventListeners(AVAILABLE_PRIVATE_GUILD_QUEUE.toArray())
-                    .addEventListeners(new UserMemberCachingListener<>(database.getWrapper(), CachedUser.class))
-                    .addEventListeners(new GuildCachingListener<>(database.getWrapper(), CachedGuild.class))
+                    .addEventListeners(new UserMemberCachingListener<>(wrapper, CachedUser.class))
+                    .addEventListeners(new GuildCachingListener<>(wrapper, CachedGuild.class))
                     .addEventListeners(new InternalListener())
                     .addEventListeners(new Listings())
                     .addEventListeners(new WolfiaGuildListener())
@@ -208,10 +190,6 @@ public class Wolfia {
     }
 
     private Wolfia() {
-    }
-
-    public static Database getDatabase() {
-        return database;
     }
 
     public static CommandListener getCommandListener() {
@@ -397,7 +375,7 @@ public class Wolfia {
 
         //shutdown DB
         log.info("Shutting down database");
-        database.shutdown();
+        Launcher.getBotContext().getDatabase().shutdown();
 
         //shutdown logback logger
         log.info("Shutting down logger :rip:");
@@ -405,46 +383,5 @@ public class Wolfia {
         loggerContext.stop();
     }, "shutdown-hook");
 
-    @Nonnull
-    private static String getVersionInfo() {
-        return art
-                + "\n"
-                + "\n\tVersion:       " + App.VERSION
-                + "\n\tBuild:         " + App.BUILD_NUMBER
-                + "\n\tBuild time:    " + TextchatUtils.toBerlinTime(App.BUILD_TIME)
-                + "\n\tCommit:        " + GitRepoState.getGitRepositoryState().commitIdAbbrev + " (" + GitRepoState.getGitRepositoryState().branch + ")"
-                + "\n\tCommit time:   " + TextchatUtils.toBerlinTime(GitRepoState.getGitRepositoryState().commitTime * 1000)
-                + "\n\tJVM:           " + System.getProperty("java.version")
-                + "\n\tJDA:           " + JDAInfo.VERSION
-                + "\n";
-    }
 
-    //########## vanity
-    private static final String art = "\n"
-            + "\n                              __"
-            + "\n                            .d$$b"
-            + "\n                           .' TO$;\\"
-            + "\n        Wolfia            /  : TP._;"
-            + "\n    Werewolf & Mafia     / _.;  :Tb|"
-            + "\n      Discord bot       /   /   ;j$j"
-            + "\n                    _.-\"       d$$$$"
-            + "\n                  .' ..       d$$$$;"
-            + "\n                 /  /P'      d$$$$P. |\\"
-            + "\n                /   \"      .d$$$P' |\\^\"l"
-            + "\n              .'           `T$P^\"\"\"\"\"  :"
-            + "\n          ._.'      _.'                ;"
-            + "\n       `-.-\".-'-' ._.       _.-\"    .-\""
-            + "\n     `.-\" _____  ._              .-\""
-            + "\n    -(.g$$$$$$$b.              .'"
-            + "\n      \"\"^^T$$$P^)            .(:"
-            + "\n        _/  -\"  /.'         /:/;"
-            + "\n     ._.'-'`-'  \")/         /;/;"
-            + "\n  `-.-\"..--\"\"   \" /         /  ;"
-            + "\n .-\" ..--\"\"        -'          :"
-            + "\n ..--\"\"--.-\"         (\\      .-(\\"
-            + "\n   ..--\"\"              `-\\(\\/;`"
-            + "\n     _.                      :"
-            + "\n                             ;`-"
-            + "\n                            :\\"
-            + "\n                            ;";
 }

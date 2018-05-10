@@ -26,6 +26,7 @@ import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.stereotype.Component;
 import space.npstr.sqlsauce.DatabaseConnection;
 import space.npstr.sqlsauce.DatabaseWrapper;
 import space.npstr.wolfia.App;
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @ThreadSafe
+@Component
 public class Database {
 
     @Nullable
