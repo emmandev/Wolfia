@@ -59,7 +59,6 @@ ext {
 
     logbackVersion              = '1.2.3'
     sentryVersion               = '1.7.5'
-    discordAppenderVersion      = '1.0.0'
     annotationsVersion          = '0.0.1'
 
     yamlVersion                 = '1.19'    //1.20+ does not work with spring's configuration parsing
@@ -102,7 +101,6 @@ dependencies {
 
     //logging
     compile group: 'ch.qos.logback',        name: 'logback-classic',            version: logbackVersion         //logging framework
-    compile group: 'space.npstr',           name: 'logback-discord-appender',   version: discordAppenderVersion //log to discord
     compile group: 'io.sentry',             name: 'sentry-logback',             version: sentryVersion          //error aggregation
 
     //utility

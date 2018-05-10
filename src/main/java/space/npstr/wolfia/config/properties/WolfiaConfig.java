@@ -43,10 +43,6 @@ public class WolfiaConfig {
     @Setter
     private long logChannelId = 0;
 
-    @Getter
-    @Setter
-    private String errorLogWebHook = "";
-
     public String getDefaultPrefix() {
         return isDebug() ? "d." : DEFAULT_PREFIX;
     }
