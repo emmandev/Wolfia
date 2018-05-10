@@ -32,10 +32,10 @@ import javax.annotation.Nonnull;
  * Created by napster on 19.11.17.
  */
 @Slf4j
-public class ReviveComm extends BaseCommand implements IOwnerRestricted {
+public class ReviveCommand extends BaseCommand implements IOwnerRestricted {
 
-    public ReviveComm(@Nonnull final String name, @Nonnull final String... aliases) {
-        super(name, aliases);
+    public ReviveCommand(@Nonnull final String trigger, @Nonnull final String... aliases) {
+        super(trigger, aliases);
     }
 
     @Nonnull
