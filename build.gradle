@@ -60,6 +60,7 @@ ext {
     logbackVersion              = '1.2.3'
     sentryVersion               = '1.7.5'
     discordAppenderVersion      = '1.0.0'
+    annotationsVersion          = '0.0.1'
 
     yamlVersion                 = '1.21'
     okhttpVersion               = '3.10.0'
@@ -108,6 +109,7 @@ dependencies {
     compile group: 'org.yaml',              name: 'snakeyaml',                  version: yamlVersion            //parse yaml files
     compile group: 'com.squareup.okhttp3',  name: 'okhttp',                     version: okhttpVersion          //http client
     compile group: 'com.github.ben-manes.caffeine', name:'caffeine',            version: caffeineVersion        //caches
+    compile group: 'space.npstr',           name: 'annotations',                version: annotationsVersion     // moar annotations
 
     //database
     compile group: 'space.npstr.SqlSauce',  name: 'sqlsauce-core',              version: sqlsauceVersion        //db stack
