@@ -68,7 +68,7 @@ public class Launcher implements ApplicationRunner {
 
         log.info(getVersionInfo());
 
-
+        System.setProperty("spring.config.name", "wolfia");
         final SpringApplication app = new SpringApplication(Launcher.class);
         app.addListeners(event -> {
             if (event instanceof ApplicationFailedEvent) {
