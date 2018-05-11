@@ -28,11 +28,7 @@ import net.dv8tion.jda.core.entities.SelfUser;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.hooks.EventListener;
-import net.dv8tion.jda.core.requests.Requester;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.sqlsauce.DatabaseWrapper;
@@ -56,7 +52,6 @@ import space.npstr.wolfia.utils.log.LogTheStackException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -279,18 +274,6 @@ public class Wolfia {
             }
         }
         return true;
-    }
-
-    private static int getRecommendedShardCount(final String token) throws IOException {
-        final Request request = new Request.Builder()
-                .url(Requester.DISCORD_API_PREFIX + "gateway/bot")
-                .header("Authorization", "Bot " + token)
-                .header("user-agent", Requester.USER_AGENT)
-                .build();
-        try (final Response response = defaultHttpClient.newCall(request).execute()) {
-            //noinspection ConstantConditions
-            return new JSONObject(response.body().string()).getInt("shards");
-        }
     }
 
     //returns a general purpose http client builder
