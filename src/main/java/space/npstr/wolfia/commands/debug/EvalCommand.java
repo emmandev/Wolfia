@@ -20,7 +20,6 @@ package space.npstr.wolfia.commands.debug;
 import lombok.extern.slf4j.Slf4j;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.wolfia.Launcher;
-import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.IOwnerRestricted;
@@ -140,7 +139,7 @@ public class EvalCommand extends BaseCommand implements IOwnerRestricted {
         this.engine.put("games", Games.class);//access the static methods like this from eval: games.static.myStaticMethod()
         this.engine.put("db", Launcher.getBotContext().getDatabase());
 
-        final Future<?> future = Wolfia.executor.submit(() -> {
+        final Future<?> future = Launcher.getBotContext().getScheduler().getScheduler().submit(() -> {
 
             final Object out;
             try {

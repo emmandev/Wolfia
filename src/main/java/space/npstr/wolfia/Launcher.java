@@ -140,16 +140,6 @@ public class Launcher implements ApplicationRunner {
             shardManager.shutdown();
 
             //shutdown executors
-            log.info("Shutting down executor");
-            final List<Runnable> runnablesEx = Wolfia.executor.shutdownNow();
-            log.info("{} runnables canceled", runnablesEx.size());
-            try {
-                Wolfia.executor.awaitTermination(30, TimeUnit.SECONDS);
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("Interrupted while awaiting executor termination");
-            }
-
             log.info("Shutting down scheduler");
             final List<Runnable> runnablesSc = scheduler.getScheduler().shutdownNow();
             log.info("{} runnables canceled", runnablesSc.size());

@@ -1,8 +1,9 @@
 package space.npstr.wolfia.utils;
 
-import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.Launcher;
 
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -21,10 +22,11 @@ public class PeriodicTimer {
                          final long selfDestructMillis, final Consumer<Void> selfDestructCallback) {
 
         this.updateCallback = updateCallback;
-        this.updates = Wolfia.executor.scheduleAtFixedRate(this::update, updateMillis - 1000, updateMillis, TimeUnit.MILLISECONDS);
+        final ScheduledThreadPoolExecutor scheduler = Launcher.getBotContext().getScheduler().getScheduler();
+        this.updates = scheduler.scheduleAtFixedRate(this::update, updateMillis - 1000, updateMillis, TimeUnit.MILLISECONDS);
 
         this.selfDestructCallback = selfDestructCallback;
-        Wolfia.executor.schedule(this::destruct, selfDestructMillis, TimeUnit.MILLISECONDS);
+        scheduler.schedule(this::destruct, selfDestructMillis, TimeUnit.MILLISECONDS);
     }
 
     private void update() {

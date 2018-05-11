@@ -18,11 +18,11 @@
 package space.npstr.wolfia;
 
 import org.springframework.stereotype.Component;
-import space.npstr.wolfia.config.properties.ListingsConfig;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.Database;
 import space.npstr.wolfia.discord.DiscordEntityProvider;
 import space.npstr.wolfia.game.AvailablePrivateGuildQueue;
+import space.npstr.wolfia.game.tools.Scheduler;
 
 /**
  * Created by napster on 10.05.18.
@@ -37,17 +37,17 @@ public class BotContext {
 
     private final Database database;
     private final WolfiaConfig wolfiaConfig;
-    private final ListingsConfig listingsConfig;
     private final DiscordEntityProvider discordEntityProvider;
+    private final Scheduler scheduler;
     private final AvailablePrivateGuildQueue availablePrivateGuildQueue;
 
-    public BotContext(final Database database, final WolfiaConfig wolfiaConfig, final ListingsConfig listingsConfig,
-                      final DiscordEntityProvider discordEntityProvider,
+    public BotContext(final Database database, final WolfiaConfig wolfiaConfig,
+                      final DiscordEntityProvider discordEntityProvider, final Scheduler scheduler,
                       final AvailablePrivateGuildQueue availablePrivateGuildQueue) {
         this.database = database;
         this.wolfiaConfig = wolfiaConfig;
-        this.listingsConfig = listingsConfig;
         this.discordEntityProvider = discordEntityProvider;
+        this.scheduler = scheduler;
         this.availablePrivateGuildQueue = availablePrivateGuildQueue;
     }
 
@@ -59,12 +59,12 @@ public class BotContext {
         return this.wolfiaConfig;
     }
 
-    public ListingsConfig getListingsConfig() {
-        return this.listingsConfig;
-    }
-
     public DiscordEntityProvider getDiscordEntityProvider() {
         return this.discordEntityProvider;
+    }
+
+    public Scheduler getScheduler() {
+        return scheduler;
     }
 
     public AvailablePrivateGuildQueue getAvailablePrivateGuildQueue() {

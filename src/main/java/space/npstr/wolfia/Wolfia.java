@@ -20,7 +20,6 @@ package space.npstr.wolfia;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.hooks.EventListener;
-import space.npstr.wolfia.game.tools.ExceptionLoggingExecutor;
 import space.npstr.wolfia.utils.log.LogTheStackException;
 
 import java.util.Optional;
@@ -34,9 +33,6 @@ import java.util.Optional;
  */
 @Slf4j
 public class Wolfia {
-
-    //todo find a better way to execute tasks; java's built in ScheduledExecutorService is rather crappy for many reasons; until then a big-sized pool size will suffice to make sure tasks get executed when they are due
-    public static final ExceptionLoggingExecutor executor = new ExceptionLoggingExecutor(100, "main-scheduled-executor");
 
     public static final Thread.UncaughtExceptionHandler uncaughtExceptionHandler
             = (t, e) -> log.error("Uncaught exception in thread {}", t.getName(), e);
