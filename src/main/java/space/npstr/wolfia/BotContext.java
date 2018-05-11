@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import space.npstr.wolfia.config.properties.ListingsConfig;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.Database;
+import space.npstr.wolfia.game.AvailablePrivateGuildQueue;
 
 /**
  * Created by napster on 10.05.18.
@@ -36,11 +37,14 @@ public class BotContext {
     private final Database database;
     private final WolfiaConfig wolfiaConfig;
     private final ListingsConfig listingsConfig;
+    private final AvailablePrivateGuildQueue availablePrivateGuildQueue;
 
-    public BotContext(final Database database, final WolfiaConfig wolfiaConfig, final ListingsConfig listingsConfig) {
+    public BotContext(final Database database, final WolfiaConfig wolfiaConfig, final ListingsConfig listingsConfig,
+                      final AvailablePrivateGuildQueue availablePrivateGuildQueue) {
         this.database = database;
         this.wolfiaConfig = wolfiaConfig;
         this.listingsConfig = listingsConfig;
+        this.availablePrivateGuildQueue = availablePrivateGuildQueue;
     }
 
     public Database getDatabase() {
@@ -53,5 +57,9 @@ public class BotContext {
 
     public ListingsConfig getListingsConfig() {
         return this.listingsConfig;
+    }
+
+    public AvailablePrivateGuildQueue getAvailablePrivateGuildQueue() {
+        return availablePrivateGuildQueue;
     }
 }

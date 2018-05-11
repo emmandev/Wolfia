@@ -30,7 +30,6 @@ import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.hooks.EventListener;
 import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
-import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.sqlsauce.DatabaseWrapper;
 import space.npstr.sqlsauce.jda.listeners.GuildCachingListener;
 import space.npstr.sqlsauce.jda.listeners.UserMemberCachingListener;
@@ -38,7 +37,6 @@ import space.npstr.wolfia.commands.debug.SyncCommand;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.entities.CachedGuild;
 import space.npstr.wolfia.db.entities.CachedUser;
-import space.npstr.wolfia.db.entities.PrivateGuild;
 import space.npstr.wolfia.events.CommandListener;
 import space.npstr.wolfia.events.InternalListener;
 import space.npstr.wolfia.events.WolfiaGuildListener;
@@ -55,7 +53,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -70,7 +67,6 @@ import java.util.concurrent.TimeoutException;
 public class Wolfia {
 
     public static final long START_TIME = System.currentTimeMillis();
-    public static final LinkedBlockingQueue<PrivateGuild> AVAILABLE_PRIVATE_GUILD_QUEUE = new LinkedBlockingQueue<>();
     private static final OkHttpClient defaultHttpClient = getDefaultHttpClientBuilder().build();
     //todo find a better way to execute tasks; java's built in ScheduledExecutorService is rather crappy for many reasons; until then a big-sized pool size will suffice to make sure tasks get executed when they are due
     public static final ExceptionLoggingExecutor executor = new ExceptionLoggingExecutor(100, "main-scheduled-executor");
@@ -116,13 +112,6 @@ public class Wolfia {
         }
 
         final DatabaseWrapper wrapper = Launcher.getBotContext().getDatabase().getWrapper();
-        try {
-            AVAILABLE_PRIVATE_GUILD_QUEUE.addAll(wrapper.selectJpqlQuery("FROM PrivateGuild", null, PrivateGuild.class));
-            log.info("{} private guilds loaded", AVAILABLE_PRIVATE_GUILD_QUEUE.size());
-        } catch (final DatabaseException e) {
-            log.error("Failed to load private guilds, exiting", e);
-            System.exit(2);
-        }
 
         //set up JDA
         log.info("Setting up JDA and main listener");
@@ -146,7 +135,7 @@ public class Wolfia {
                     .setToken(wolfiaConfig.getDiscordToken())
                     .setGame(Game.playing(App.GAME_STATUS))
                     .addEventListeners(commandListener)
-                    .addEventListeners(AVAILABLE_PRIVATE_GUILD_QUEUE.toArray())
+                    .addEventListeners(Launcher.getBotContext().getAvailablePrivateGuildQueue().getAll())
                     .addEventListeners(new UserMemberCachingListener<>(wrapper, CachedUser.class))
                     .addEventListeners(new GuildCachingListener<>(wrapper, CachedGuild.class))
                     .addEventListeners(new InternalListener())

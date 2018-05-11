@@ -96,7 +96,7 @@ public class RegisterPrivateServerCommand extends BaseCommand implements IOwnerR
             final int number = Math.toIntExact(dbWrapper.selectJpqlQuery("SELECT COUNT (pg) FROM PrivateGuild pg", Long.class).get(0));
             PrivateGuild pg = new PrivateGuild(number, context.guild.getIdLong());
             pg = dbWrapper.persist(pg);
-            Wolfia.AVAILABLE_PRIVATE_GUILD_QUEUE.add(pg);
+            Launcher.getBotContext().getAvailablePrivateGuildQueue().free(pg);
             Wolfia.addEventListener(pg);
             context.guild.getManager().setName("Wolfia Private Server #" + pg.getNumber()).queue(null, RestActions.defaultOnFail());
         } catch (final DatabaseException e) {
