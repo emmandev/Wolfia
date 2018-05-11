@@ -17,26 +17,17 @@
 
 package space.npstr.wolfia;
 
-import ch.qos.logback.classic.LoggerContext;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.hooks.EventListener;
-import org.slf4j.LoggerFactory;
 import space.npstr.wolfia.commands.debug.SyncCommand;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.tools.ExceptionLoggingExecutor;
-import space.npstr.wolfia.utils.log.DiscordLogger;
 import space.npstr.wolfia.utils.log.LogTheStackException;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Created by npstr on 22.08.2016
@@ -60,8 +51,6 @@ public class Wolfia {
     //set up things that are crucial
     //if something fails exit right away
     public static void main(final String[] args) throws InterruptedException {
-        Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
-
         final WolfiaConfig wolfiaConfig = Launcher.getBotContext().getWolfiaConfig();
 
         if (wolfiaConfig.isDebug())
@@ -153,58 +142,5 @@ public class Wolfia {
         }
         return true;
     }
-
-    private static final Thread SHUTDOWN_HOOK = new Thread(() -> {
-        log.info("Shutdown hook triggered! {} games still ongoing.", Games.getRunningGamesCount());
-        Future waitForGamesToEnd = executor.submit(() -> {
-            while (Games.getRunningGamesCount() > 0) {
-                log.info("Waiting on {} games to finish.", Games.getRunningGamesCount());
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException ignored) {
-                }
-            }
-        });
-        try {
-            //is this value is changed, make sure to adjust the one in docker-update.sh
-            waitForGamesToEnd.get(2, TimeUnit.HOURS); //should be enough until the forseeable future
-            //todo persist games (big changes)
-        } catch (ExecutionException | InterruptedException | TimeoutException ignored) {
-            log.error("dafuq", ignored);
-        }
-        if (Games.getRunningGamesCount() > 0) {
-            log.error("Killing {} games while exiting", Games.getRunningGamesCount());
-        }
-
-        log.info("Shutting down discord logger");
-        DiscordLogger.shutdown(10, TimeUnit.SECONDS);
-
-        //okHttpClient claims that a shutdown isn't necessary
-
-        //shutdown JDA
-        log.info("Shutting down shards");
-        Launcher.getBotContext().getDiscordEntityProvider().getShardManager().shutdown();
-
-        //shutdown executors
-        log.info("Shutting down executor");
-        final List<Runnable> runnables = executor.shutdownNow();
-        log.info("{} runnables canceled", runnables.size());
-        try {
-            executor.awaitTermination(30, TimeUnit.SECONDS);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("Interrupted while awaiting executor termination");
-        }
-
-        //shutdown DB
-        log.info("Shutting down database");
-        Launcher.getBotContext().getDatabase().shutdown();
-
-        //shutdown logback logger
-        log.info("Shutting down logger :rip:");
-        final LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.stop();
-    }, "shutdown-hook");
-
 
 }

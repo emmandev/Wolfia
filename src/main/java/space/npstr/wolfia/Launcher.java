@@ -17,8 +17,11 @@
 
 package space.npstr.wolfia;
 
+import ch.qos.logback.classic.LoggerContext;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDAInfo;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -29,10 +32,19 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationFailedEvent;
+import space.npstr.wolfia.db.Database;
+import space.npstr.wolfia.game.definitions.Games;
+import space.npstr.wolfia.game.tools.Scheduler;
 import space.npstr.wolfia.utils.GitRepoState;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
+import space.npstr.wolfia.utils.log.DiscordLogger;
 
 import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by napster on 10.05.18.
@@ -49,6 +61,8 @@ public class Launcher implements ApplicationRunner {
 
     @SuppressWarnings("NullableProblems")
     private static BotContext botContext;
+
+    private final Thread shutdownHook;
 
     public static BotContext getBotContext() {
         return botContext;
@@ -79,12 +93,77 @@ public class Launcher implements ApplicationRunner {
         app.run(args);
     }
 
-    public Launcher(final BotContext botContext) {
+    public Launcher(final BotContext botContext, final Scheduler scheduler, ShardManager shardManager, Database database) {
         Launcher.botContext = botContext;
+
+        shutdownHook = new Thread(() -> {
+            log.info("Shutdown hook triggered! {} games still ongoing.", Games.getRunningGamesCount());
+            final Future waitForGamesToEnd = scheduler.getScheduler().submit(() -> {
+                while (Games.getRunningGamesCount() > 0) {
+                    log.info("Waiting on {} games to finish.", Games.getRunningGamesCount());
+                    try {
+                        Thread.sleep(10000);
+                    } catch (final InterruptedException ignored) {
+                    }
+                }
+            });
+            try {
+                //is this value is changed, make sure to adjust the one in docker-update.sh
+                waitForGamesToEnd.get(2, TimeUnit.HOURS); //should be enough until the forseeable future
+                //todo persist games (big changes)
+            } catch (final ExecutionException | InterruptedException | TimeoutException e) {
+                log.error("dafuq", e);
+            }
+            if (Games.getRunningGamesCount() > 0) {
+                log.warn("Killing {} games while exiting", Games.getRunningGamesCount());
+            }
+
+            log.info("Shutting down discord logger");
+            DiscordLogger.shutdown(10, TimeUnit.SECONDS);
+
+            //okHttpClient claims that a shutdown isn't necessary
+
+            //shutdown JDA
+            log.info("Shutting down shards");
+            shardManager.shutdown();
+
+            //shutdown executors
+            log.info("Shutting down executor");
+            final List<Runnable> runnablesEx = Wolfia.executor.shutdownNow();
+            log.info("{} runnables canceled", runnablesEx.size());
+            try {
+                Wolfia.executor.awaitTermination(30, TimeUnit.SECONDS);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Interrupted while awaiting executor termination");
+            }
+
+            log.info("Shutting down scheduler");
+            final List<Runnable> runnablesSc = scheduler.getScheduler().shutdownNow();
+            log.info("{} runnables canceled", runnablesSc.size());
+            try {
+                scheduler.getScheduler().awaitTermination(30, TimeUnit.SECONDS);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Interrupted while awaiting scheduler termination");
+            }
+
+            //shutdown DB
+            log.info("Shutting down database");
+            database.shutdown();
+
+            //shutdown logback logger
+            log.info("Shutting down logger :rip:");
+            final LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            loggerContext.stop();
+        }, "shutdown-hook");
     }
 
     @Override
     public void run(final ApplicationArguments args) throws Exception {
+
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+
         Wolfia.main(args.getSourceArgs());
     }
 
