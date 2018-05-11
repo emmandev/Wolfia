@@ -23,7 +23,6 @@ import space.npstr.wolfia.commands.debug.EvalCommand;
 import space.npstr.wolfia.commands.debug.KillGameCommand;
 import space.npstr.wolfia.commands.debug.MaintenanceCommand;
 import space.npstr.wolfia.commands.debug.RegisterPrivateServerCommand;
-import space.npstr.wolfia.commands.debug.RestartCommand;
 import space.npstr.wolfia.commands.debug.ReviveCommand;
 import space.npstr.wolfia.commands.debug.RunningCommand;
 import space.npstr.wolfia.commands.debug.ShutdownCommand;
@@ -165,10 +164,9 @@ public class CommRegistry {
         registerCommand(new KillGameCommand                  ("killgame"));
         registerCommand(new MaintenanceCommand               ("maint"));
         registerCommand(new RegisterPrivateServerCommand     ("register"));
-        registerCommand(new RestartCommand                   ("restart"));
         registerCommand(new ReviveCommand                    ("revive"));
         registerCommand(new RunningCommand                   ("running"));
-        registerCommand(new ShutdownCommand                  ("shutdown"));
+        registerCommand(new ShutdownCommand                  ("shutdown", "restart"));
         registerCommand(new SyncCommand                      ("sync"));
 
         //@formatter:on

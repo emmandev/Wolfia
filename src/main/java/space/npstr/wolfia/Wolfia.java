@@ -28,8 +28,6 @@ import space.npstr.wolfia.commands.debug.SyncCommand;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.tools.ExceptionLoggingExecutor;
-import space.npstr.wolfia.utils.discord.Emojis;
-import space.npstr.wolfia.utils.discord.TextchatUtils;
 import space.npstr.wolfia.utils.log.DiscordLogger;
 import space.npstr.wolfia.utils.log.LogTheStackException;
 
@@ -156,28 +154,8 @@ public class Wolfia {
         return true;
     }
 
-    //################# shutdown handling
-
-    public static final int EXIT_CODE_SHUTDOWN = 0;
-    public static final int EXIT_CODE_RESTART = 2;
-
-    private static boolean shuttingDown = false;
-
-    public static boolean isShuttingDown() {
-        return shuttingDown;
-    }
-
-
-    public static void shutdown(final int code) {
-        DiscordLogger.getLogger().log("%s `%s` Shutting down with exit code %s",
-                Emojis.DOOR, TextchatUtils.berlinTime(), code);
-        log.info("Exiting with code {}", code);
-        System.exit(code);
-    }
-
     private static final Thread SHUTDOWN_HOOK = new Thread(() -> {
         log.info("Shutdown hook triggered! {} games still ongoing.", Games.getRunningGamesCount());
-        shuttingDown = true;
         Future waitForGamesToEnd = executor.submit(() -> {
             while (Games.getRunningGamesCount() > 0) {
                 log.info("Waiting on {} games to finish.", Games.getRunningGamesCount());
