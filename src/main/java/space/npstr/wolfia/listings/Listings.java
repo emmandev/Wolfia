@@ -18,21 +18,26 @@
 package space.npstr.wolfia.listings;
 
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.events.ReadyEvent;
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import okhttp3.OkHttpClient;
-import space.npstr.wolfia.Wolfia;
+import org.springframework.stereotype.Component;
+import space.npstr.wolfia.config.properties.ListingsConfig;
+import space.npstr.wolfia.config.properties.WolfiaConfig;
+import space.npstr.wolfia.discord.DiscordRequester;
+import space.npstr.wolfia.game.tools.Scheduler;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by napster on 23.07.17.
@@ -40,18 +45,41 @@ import java.util.concurrent.Future;
  * Takes care of posting all our stats to various listing sites
  */
 @Slf4j
+@Component
 public class Listings extends ListenerAdapter {
-
-    protected static OkHttpClient listingsHttpClient = Wolfia.getDefaultHttpClientBuilder()
-            .build();
 
     //serves as both a set of registered listings and keeping track of ongoing tasks of posting stats
     private final Map<Listing, Future> tasks = new HashMap<>();
 
-    public Listings() {
-        this.tasks.put(new DiscordBotsPw(listingsHttpClient), null);
-        this.tasks.put(new DiscordBotsOrg(listingsHttpClient), null);
-        this.tasks.put(new Carbonitex(listingsHttpClient), null);
+    private final Scheduler scheduler;
+
+    public Listings(final OkHttpClient.Builder defaultHttpClientBuilder, final ListingsConfig listingsConfig,
+                    final WolfiaConfig wolfiaConfig, final Scheduler scheduler, final ShardManager shardManager,
+                    final DiscordRequester discordRequester) {
+        this.scheduler = scheduler;
+        final OkHttpClient listingsHttpClient = defaultHttpClientBuilder
+//                .eventListener(new Metrics.HttpEventListener("listings")) todo add metrics
+                .build();
+
+        final DiscordBotsPw botsPw = new DiscordBotsPw(listingsHttpClient, listingsConfig, wolfiaConfig, discordRequester);
+        this.tasks.put(botsPw, null);
+        final DiscordBotsOrg botsOrg = new DiscordBotsOrg(listingsHttpClient, listingsConfig, wolfiaConfig, discordRequester);
+        this.tasks.put(botsOrg, null);
+        final Carbonitex carbonitex = new Carbonitex(listingsHttpClient, listingsConfig, wolfiaConfig, discordRequester);
+        this.tasks.put(carbonitex, null);
+
+        final int initialDelay = 0;
+        final int period = 5;
+        final TimeUnit timeUnit = TimeUnit.MINUTES;
+        scheduler.scheduleExceptionSafeAtFixedRate(() -> botsPw.postGlobalStats(shardManager),
+                "Failed to post global listing stats to " + DiscordBotsPw.NAME,
+                initialDelay, period, timeUnit);
+        scheduler.scheduleExceptionSafeAtFixedRate(() -> botsOrg.postGlobalStats(shardManager),
+                "Failed to post global listing stats to " + DiscordBotsOrg.NAME,
+                initialDelay, period, timeUnit);
+        scheduler.scheduleExceptionSafeAtFixedRate(() -> carbonitex.postGlobalStats(shardManager),
+                "Failed to post global listing stats to " + Carbonitex.NAME,
+                initialDelay, period, timeUnit);
     }
 
     private static boolean isTaskRunning(@Nullable final Future task) {
@@ -59,23 +87,25 @@ public class Listings extends ListenerAdapter {
     }
 
     //according to discordbotspw and discordbotsorg docs: post stats on guild join, guild leave, and ready events
-    private void postAllStats(@Nonnull final JDA jda) {
+    private void postAllStats(final JDA jda) {
         final Set<Listing> listings = new HashSet<>(this.tasks.keySet());
         for (final Listing listing : listings) {
             postStats(listing, jda);
         }
     }
 
-    private synchronized void postStats(@Nonnull final Listing listing, @Nonnull final JDA jda) {
+    private synchronized void postStats(final Listing listing, final JDA jda) {
         final Future task = this.tasks.get(listing);
         if (isTaskRunning(task)) {
             log.info("Skipping posting stats to {} since there is a task to do that running already.", listing.name);
             return;
         }
 
-        this.tasks.put(listing, Wolfia.executor.submit(() -> {
+        tasks.put(listing, scheduler.getScheduler().submit(() -> {
             try {
-                listing.postStats(jda);
+                if (listing.supportsShardPayload()) {
+                    listing.postShardStats(jda);
+                }
             } catch (final InterruptedException e) {
                 log.error("Task to send stats to {} interrupted", listing.name, e);
             }

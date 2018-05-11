@@ -18,16 +18,19 @@
 package space.npstr.wolfia.listings;
 
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import space.npstr.wolfia.Launcher;
-import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.App;
+import space.npstr.wolfia.config.properties.WolfiaConfig;
+import space.npstr.wolfia.discord.DiscordRequester;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by napster on 06.10.17.
@@ -37,52 +40,92 @@ import java.io.IOException;
 @Slf4j
 public abstract class Listing {
 
-    protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    protected static final MediaType JSON = parseMediaType("application/json; charset=utf-8");
 
     protected final String name;
     private final OkHttpClient httpClient;
+    private final WolfiaConfig wolfiaConfig;
+    private final DiscordRequester discordRequester;
 
-    private String lastPayload;
+    //id to paylod. -1 for global
+    private final Map<Integer, String> lastPayloads = new HashMap<>();
 
-    public Listing(@Nonnull final String name, @Nonnull final OkHttpClient httpClient) {
+    public Listing(final String name, final OkHttpClient httpClient, final WolfiaConfig wolfiaConfig,
+                   final DiscordRequester discordRequester) {
         this.name = name;
         this.httpClient = httpClient;
+        this.wolfiaConfig = wolfiaConfig;
+        this.discordRequester = discordRequester;
     }
 
-    @Nonnull
-    protected abstract String createPayload(@Nonnull JDA jda);
+    private static MediaType parseMediaType(final String input) {
+        final MediaType mediaType = MediaType.parse(input);
+        if (mediaType == null) {
+            throw new IllegalArgumentException("Not a mediatype: " + input);
+        }
+        return mediaType;
+    }
 
-    @Nonnull
-    protected abstract Request.Builder createRequest(long botId, @Nonnull String payload);
+    protected abstract String createGlobalPayload(ShardManager shardManager);
+
+    //override to false for list sites that do not support shard payloads (like carbonitex for example)
+    protected boolean supportsShardPayload() {
+        return true;
+    }
+
+    protected abstract String createShardPayload(JDA jda);
+
+    protected abstract Request.Builder createRequest(long botId, String payload);
 
     //return false if there is no token configured, or whatever is needed to post to the site
     protected abstract boolean isConfigured();
 
-    //retries with growing delay until it is successful
-    public void postStats(@Nonnull final JDA jda) throws InterruptedException {
+    protected String getUserAgent() {
+        return "DiscordBot (" + this.discordRequester.getAppInfo().getName() + ", "
+                + App.GITHUB_LINK + ", "
+                + App.VERSION + ")";
+    }
+
+    public void postGlobalStats(final ShardManager shardManager) throws InterruptedException {
         if (!isConfigured()) {
-            log.debug("Skipping posting stats to {} due to not being configured", this.name);
+            log.debug("Skipping posting global stats to {} due to not being configured", this.name);
+            return;
+        }
+        if (this.wolfiaConfig.isDebug()) {
+            log.info("Skipping posting global stats to {} due to running in debug mode", this.name);
             return;
         }
 
-        if (Launcher.getBotContext().getWolfiaConfig().isDebug()) {
-            log.info("Skipping posting stats to {} due to running in debug mode", this.name);
+        for (final JDA jda : shardManager.getShards()) {
+            if (jda.getStatus() != JDA.Status.CONNECTED) {
+                log.info("Skipping posting global stats to {} due to not all shards being up", this.name);
+                return;
+            }
+        }
+        sendRequestUntilSuccess(-1, createGlobalPayload(shardManager));
+    }
+
+    //retries with growing delay until it is successful
+    public void postShardStats(final JDA jda) throws InterruptedException {
+        if (!isConfigured()) {
+            log.debug("Skipping posting shard stats to {} due to not being configured", this.name);
+            return;
+        }
+        if (this.wolfiaConfig.isDebug()) {
+            log.info("Skipping posting shard stats to {} due to running in debug mode", this.name);
+            return;
+        }
+        sendRequestUntilSuccess(jda.getShardInfo().getShardId(), createShardPayload(jda));
+    }
+
+    //id may be -1 for global stats
+    private void sendRequestUntilSuccess(final int id, final String payload) throws InterruptedException {
+        if (payload.equals(this.lastPayloads.get(id))) {
+            log.info("Skipping sending stats of shard {} to {} since the payload has not changed", id, this.name);
             return;
         }
 
-        if (this instanceof Carbonitex && !Wolfia.allShardsUp()) {
-            log.info("Skipping posting stats to Carbonitex since not all shards are up");
-            return;
-        }
-
-        final String payload = createPayload(jda);
-
-        if (payload.equals(this.lastPayload)) {
-            log.info("Skipping sending stats to {} since the payload has not changed", this.name);
-            return;
-        }
-
-        final Request req = createRequest(jda.getSelfUser().getIdLong(), payload).build();
+        final Request req = createRequest(this.discordRequester.getAppInfo().getId(), payload).build();
 
         int attempt = 0;
         boolean success = false;
@@ -90,16 +133,16 @@ public abstract class Listing {
             attempt++;
             try (final Response response = this.httpClient.newCall(req).execute()) {
                 if (response.isSuccessful()) {
-                    log.info("Successfully posted bot stats to {} on attempt {}, code {}", this.name, attempt, response.code());
-                    this.lastPayload = payload;
+                    log.info("Successfully posted bot stats of shard {} to {} on attempt {}, code {}", id, this.name, attempt, response.code());
+                    this.lastPayloads.put(id, payload);
                     success = true;
                 } else {
                     //noinspection ConstantConditions
-                    log.info("Failed to post stats to {} on attempt {}: code {}, body:\n{}",
-                            this.name, attempt, response.code(), response.body().string());
+                    log.info("Failed to post stats of shard {} to {} on attempt {}: code {}, body:\n{}",
+                            id, this.name, attempt, response.code(), response.body().string());
                 }
             } catch (final IOException e) {
-                log.info("Failed to post stats to {} on attempt {}", this.name, attempt, e);
+                log.info("Failed to post stats of shard {} to {} on attempt {}", id, this.name, attempt, e);
             }
 
             if (!success) {
@@ -108,7 +151,7 @@ public abstract class Listing {
             }
 
             if (attempt == 10 || attempt == 100) { // no need to spam these
-                log.warn("Attempt {} to post stats to {} unsuccessful. See logs for details.", attempt, this.name);
+                log.warn("Attempt {} to post stats of shard {} to {} unsuccessful. See logs for details.", id, attempt, this.name);
             }
         }
     }

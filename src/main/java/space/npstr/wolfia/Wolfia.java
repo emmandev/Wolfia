@@ -44,7 +44,6 @@ import space.npstr.wolfia.events.InternalListener;
 import space.npstr.wolfia.events.WolfiaGuildListener;
 import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.tools.ExceptionLoggingExecutor;
-import space.npstr.wolfia.listings.Listings;
 import space.npstr.wolfia.utils.discord.Emojis;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
 import space.npstr.wolfia.utils.log.DiscordLogger;
@@ -78,6 +77,8 @@ public class Wolfia {
 
 
     private static ShardManager shardManager;
+    public static final Thread.UncaughtExceptionHandler uncaughtExceptionHandler
+            = (t, e) -> log.error("Uncaught exception in thread {}", t.getName(), e);
 
     private static boolean started = false;
     private static CommandListener commandListener;
@@ -149,7 +150,6 @@ public class Wolfia {
                     .addEventListeners(new UserMemberCachingListener<>(wrapper, CachedUser.class))
                     .addEventListeners(new GuildCachingListener<>(wrapper, CachedGuild.class))
                     .addEventListeners(new InternalListener())
-                    .addEventListeners(new Listings())
                     .addEventListeners(new WolfiaGuildListener())
                     .setHttpClientBuilder(getDefaultHttpClientBuilder())
                     .setEnableShutdownHook(false)

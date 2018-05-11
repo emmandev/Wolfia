@@ -58,7 +58,7 @@ public class Scheduler {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public Future scheduleExceptionSafeAtFixedRate(final ExceptionLoggingExecutor.ExceptionalTask task, final String errorLogMessage,
+    public Future scheduleExceptionSafeAtFixedRate(final ExceptionLoggingExecutor.ExceptionalRunnable task, final String errorLogMessage,
                                                    final int initialDelay, final int period, final TimeUnit timeUnit) {
         return this.scheduler.scheduleAtFixedRate(() -> {
             try {

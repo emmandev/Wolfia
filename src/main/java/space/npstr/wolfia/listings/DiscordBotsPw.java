@@ -17,30 +17,41 @@
 
 package space.npstr.wolfia.listings;
 
+import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.json.JSONObject;
-import space.npstr.wolfia.App;
-import space.npstr.wolfia.Launcher;
-
-import javax.annotation.Nonnull;
+import space.npstr.wolfia.config.properties.ListingsConfig;
+import space.npstr.wolfia.config.properties.WolfiaConfig;
+import space.npstr.wolfia.discord.DiscordRequester;
 
 /**
  * Created by napster on 06.10.17.
  */
 public class DiscordBotsPw extends Listing {
 
+    public static final String NAME = "bots.discord.pw";
+    private final ListingsConfig listingsConfig;
+
     //https://bots.discord.pw
     //api docs: https://bots.discord.pw/api
-    public DiscordBotsPw(@Nonnull final OkHttpClient httpClient) {
-        super("bots.discord.pw", httpClient);
+    public DiscordBotsPw(final OkHttpClient httpClient, final ListingsConfig listingsConfig,
+                         final WolfiaConfig wolfiaConfig, final DiscordRequester discordRequester) {
+        super(NAME, httpClient, wolfiaConfig, discordRequester);
+        this.listingsConfig = listingsConfig;
     }
 
-    @Nonnull
     @Override
-    protected String createPayload(@Nonnull final JDA jda) {
+    protected String createGlobalPayload(final ShardManager shardManager) {
+        return new JSONObject()
+                .put("server_count", shardManager.getGuildCache().size())
+                .toString();
+    }
+
+    @Override
+    protected String createShardPayload(final JDA jda) {
         return new JSONObject()
                 .put("shard_id", jda.getShardInfo().getShardId())
                 .put("shard_count", jda.getShardInfo().getShardTotal())
@@ -48,20 +59,19 @@ public class DiscordBotsPw extends Listing {
                 .toString();
     }
 
-    @Nonnull
     @Override
-    protected Request.Builder createRequest(final long botId, @Nonnull final String payload) {
+    protected Request.Builder createRequest(final long botId, final String payload) {
         final RequestBody body = RequestBody.create(JSON, payload);
         return new Request.Builder()
-                .addHeader("user-agent", "Wolfia DiscordBot (" + App.GITHUB_LINK + ", " + App.VERSION + ")")
                 .url(String.format("https://bots.discord.pw/api/bots/%s/stats", botId))
-                .addHeader("Authorization", Launcher.getBotContext().getListingsConfig().getBotsPwToken())
+                .addHeader("user-agent", getUserAgent())
+                .addHeader("Authorization", this.listingsConfig.getBotsPwToken())
                 .post(body);
     }
 
     @Override
     protected boolean isConfigured() {
-        final String botsPwToken = Launcher.getBotContext().getListingsConfig().getBotsPwToken();
+        final String botsPwToken = this.listingsConfig.getBotsPwToken();
         return botsPwToken != null && !botsPwToken.isEmpty();
     }
 }
