@@ -85,4 +85,17 @@ public class DiscordEntityProvider {
     public User getSelf() {
         return anyShard().orElseThrow().getSelfUser();  //todo this can be improved by fetching the user from discord
     }
+
+    public boolean allShardsUp() {
+        final ShardManager shardManager = getShardManager();
+        if (shardManager.getShards().size() < shardManager.getShardsTotal()) {
+            return false;
+        }
+        for (final JDA jda : shardManager.getShards()) {
+            if (jda.getStatus() != JDA.Status.CONNECTED) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

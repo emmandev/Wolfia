@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import space.npstr.wolfia.Launcher;
-import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.utils.discord.RestActions;
 
 import java.util.Optional;
@@ -68,7 +67,7 @@ public class DiscordLogger {
 
     private void sendMessage(final String message) {
         try {
-            while (!Wolfia.isStarted()) {
+            while (!Launcher.getBotContext().getDiscordEntityProvider().allShardsUp()) {
                 Thread.sleep(1000);
             }
 

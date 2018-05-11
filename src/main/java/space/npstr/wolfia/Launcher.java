@@ -32,7 +32,10 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationFailedEvent;
+import space.npstr.wolfia.commands.debug.SyncCommand;
+import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.Database;
+import space.npstr.wolfia.discord.DiscordEntityProvider;
 import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.tools.Scheduler;
 import space.npstr.wolfia.utils.GitRepoState;
@@ -60,7 +63,11 @@ import java.util.concurrent.TimeoutException;
 public class Launcher implements ApplicationRunner {
 
     @SuppressWarnings("NullableProblems")
-    private static BotContext botContext;
+    private static volatile BotContext botContext;
+    private final WolfiaConfig wolfiaConfig;
+    private final Database database;
+    private final DiscordEntityProvider discordEntityProvider;
+    private final Scheduler scheduler;
 
     private final Thread shutdownHook;
 
@@ -93,10 +100,15 @@ public class Launcher implements ApplicationRunner {
         app.run(args);
     }
 
-    public Launcher(final BotContext botContext, final Scheduler scheduler, ShardManager shardManager, Database database) {
+    public Launcher(final BotContext botContext, final WolfiaConfig wolfiaConfig, final Database database,
+                    final DiscordEntityProvider discordEntityProvider, final Scheduler scheduler,
+                    final ShardManager shardManager) {
         Launcher.botContext = botContext;
-
-        shutdownHook = new Thread(() -> {
+        this.wolfiaConfig = wolfiaConfig;
+        this.database = database;
+        this.discordEntityProvider = discordEntityProvider;
+        this.scheduler = scheduler;
+        this.shutdownHook = new Thread(() -> {
             log.info("Shutdown hook triggered! {} games still ongoing.", Games.getRunningGamesCount());
             final Future waitForGamesToEnd = scheduler.getScheduler().submit(() -> {
                 while (Games.getRunningGamesCount() > 0) {
@@ -164,7 +176,41 @@ public class Launcher implements ApplicationRunner {
 
         Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-        Wolfia.main(args.getSourceArgs());
+        if (wolfiaConfig.isDebug()) {
+            log.info("Running DEBUG configuration");
+        } else {
+            log.info("Running PRODUCTION configuration");
+        }
+
+        //try connecting to the database in a reasonable timeframe
+        boolean dbConnected = false;
+        final long dbConnectStarted = System.currentTimeMillis();
+        do {
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                database.getWrapper().selectSqlQuery("SELECT 1;", null);
+                dbConnected = true;
+                log.info("Initial db connection succeeded");
+            } catch (final Exception e) {
+                log.info("Failed initial db connection, retrying in a moment", e);
+                Thread.sleep(1000);
+            }
+        } while (!dbConnected && System.currentTimeMillis() - dbConnectStarted < 1000 * 60 * 2); //2 minutes
+        if (!dbConnected) {
+            log.error("Failed to init db connection in a reasonable amount of time, exiting.");
+            System.exit(2);
+        }
+
+
+        //wait for all shards to be online, then start doing things that expect the full bot to be online
+        while (!discordEntityProvider.allShardsUp()) {
+            Thread.sleep(1000);
+        }
+
+        //sync guild cache
+        // this takes a few seconds to do, so do it as the last thing of the main method, or put it into it's own thread
+        SyncCommand.syncGuilds(scheduler.getExecutor(), discordEntityProvider.getShardManager().getGuildCache().stream(), null);
+        //user cache is not synced on each start as it takes a lot of time and resources. see SyncComm for manual triggering
     }
 
 
