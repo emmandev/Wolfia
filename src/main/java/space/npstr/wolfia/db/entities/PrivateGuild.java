@@ -46,6 +46,7 @@ import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -213,13 +214,12 @@ public class PrivateGuild extends ListenerAdapter implements IEntity<Long, Priva
                     final List<Invite> invites = channel.getInvites().complete();
                     invites.forEach(i -> i.delete().complete());
                 }
-                final TextChannel tc = Wolfia.getTextChannelById(this.currentChannelId);
-                if (tc != null) {
-                    tc.delete().reason("Cleaning up private guild after game ended").complete();
-                } else {
-                    log.error("Did not find channel {} in private guild #{} to delete it.",
-                            this.currentChannelId, this.number);
-                }
+                Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(this.currentChannelId)
+                        .ifPresentOrElse(
+                                tc -> tc.delete().reason("Cleaning up private guild after game ended").complete(),
+                                () -> log.error("Did not find channel {} in private guild #{} to delete it.",
+                                        this.currentChannelId, this.number)
+                        );
             } catch (final Exception e) {
                 log.error("Exception while deleting channel {} in private guild #{} {}", this.currentChannelId,
                         this.number, this.guildId, e);
@@ -244,19 +244,22 @@ public class PrivateGuild extends ListenerAdapter implements IEntity<Long, Priva
     //this method assumes that the id itself is legit and not a mistake and we are member of this private guild
     // it is an attempt to improve the occasional inconsistency of discord which makes looking up entities a gamble
     // the main feature being the @Nonnull return contract, over the @Nullable contract of looking the entity up in JDA
-    @Nonnull
     private Guild fetchThisGuild() {
-        Guild g = Wolfia.getGuildById(this.guildId);
-        while (g == null) {
-            log.error("Could not find private guild #{} with id {}, trying in a moment",
-                    this.number, this.guildId, new LogTheStackException());
-            try {
-                Thread.sleep(5000);
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
+        Optional<Guild> guild;
+        do {
+            guild = Launcher.getBotContext().getDiscordEntityProvider().getGuildById(this.guildId);
+
+            if (!guild.isPresent()) {
+                log.error("Could not find private guild #{} with id {}, trying in a moment",
+                        this.number, this.guildId, new LogTheStackException());
+                try {
+                    Thread.sleep(5000);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
-            g = Wolfia.getGuildById(this.guildId);
-        }
-        return g;
+        } while (!guild.isPresent());
+
+        return guild.get();
     }
 }

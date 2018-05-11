@@ -24,6 +24,7 @@ import net.dv8tion.jda.core.entities.ChannelType;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
 import space.npstr.sqlsauce.DatabaseException;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.CommRegistry;
 import space.npstr.wolfia.commands.CommandContext;
@@ -228,7 +229,7 @@ public class Mafia extends Game {
                 g.getName(), g.getIdLong(), gameChannel.getName(), gameChannel.getIdLong(),
                 Games.getInfo(this).textRep(), mode.textRep, this.players.size());
         this.running = true;
-        this.gameStats.addAction(simpleAction(Wolfia.getSelfUser().getIdLong(), Actions.GAMESTART, -1));
+        this.gameStats.addAction(simpleAction(Launcher.getBotContext().getDiscordEntityProvider().getSelf().getIdLong(), Actions.GAMESTART, -1));
         //mention the players in the thread
         RestActions.sendMessage(gameChannel, "Game has started!\n" + listLivingPlayers());
 
@@ -638,7 +639,7 @@ public class Mafia extends Game {
         this.cycle++;
         this.phase = Phase.DAY;
         this.phaseStarted = System.currentTimeMillis();
-        this.gameStats.addAction(simpleAction(Wolfia.getSelfUser().getIdLong(), Actions.DAYSTART, -1));
+        this.gameStats.addAction(simpleAction(Launcher.getBotContext().getDiscordEntityProvider().getSelf().getIdLong(), Actions.DAYSTART, -1));
 
         this.votes.clear();
         this.voteActions.clear();
@@ -690,7 +691,7 @@ public class Mafia extends Game {
                     Permission.MESSAGE_WRITE).queue(null, RestActions.defaultOnFail());
         }
 
-        this.gameStats.addAction(simpleAction(Wolfia.getSelfUser().getIdLong(), Actions.DAYEND, -1));
+        this.gameStats.addAction(simpleAction(Launcher.getBotContext().getDiscordEntityProvider().getSelf().getIdLong(), Actions.DAYEND, -1));
         synchronized (this.votes) {
             RestActions.sendMessage(gameChannel, this.votingBuilder.getFinalEmbed(this.votes, this.phase, this.cycle).build());
             final List<Player> lynchCandidates = GameUtils.mostVoted(this.votes, livingPlayers);
@@ -742,7 +743,7 @@ public class Mafia extends Game {
     private void startNight() {
         this.phase = Phase.NIGHT;
         this.phaseStarted = System.currentTimeMillis();
-        this.gameStats.addAction(simpleAction(Wolfia.getSelfUser().getIdLong(), Actions.NIGHTSTART, -1));
+        this.gameStats.addAction(simpleAction(Launcher.getBotContext().getDiscordEntityProvider().getSelf().getIdLong(), Actions.NIGHTSTART, -1));
 
         this.nightActions.clear();
 
@@ -779,7 +780,7 @@ public class Mafia extends Game {
                                     RestActions.sendMessage(wolfchatChannel, String.format(
                                             "\n@here, %s will be killed! Game about to start/continue, get back to the main chat.\n%s",
                                             nightKillCandidate.bothNamesFormatted(),
-                                            TextchatUtils.getOrCreateInviteLinkForChannel(Wolfia.getTextChannelById(this.channelId))));
+                                            TextchatUtils.getOrCreateInviteLinkForChannel(Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(this.channelId).orElse(null))));
                                     this.gameStats.addActions(this.nightKillVoteActions.values());
 
                                     endNight(nightKillCandidate);
@@ -885,7 +886,7 @@ public class Mafia extends Game {
     @SuppressWarnings("unchecked")
     private void endNight(@Nonnull final Player nightKillCandidate) {
 
-        this.gameStats.addAction(simpleAction(Wolfia.getSelfUser().getIdLong(), Actions.NIGHTEND, -1));
+        this.gameStats.addAction(simpleAction(Launcher.getBotContext().getDiscordEntityProvider().getSelf().getIdLong(), Actions.NIGHTEND, -1));
 
         for (final ActionStats nightAction : this.nightActions.values()) {
             if (nightAction.getActionType() == Actions.CHECK) {

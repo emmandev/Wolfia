@@ -20,7 +20,7 @@ package space.npstr.wolfia.commands.debug;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
-import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.IOwnerRestricted;
@@ -57,7 +57,8 @@ public class RunningCommand extends BaseCommand implements IOwnerRestricted {
             final EmbedBuilder eb = game.getStatus();
             eb.addBlankField(false);
 
-            final TextChannel channel = Wolfia.getTextChannelById(game.getChannelId());
+            final TextChannel channel = Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(game.getChannelId())
+                    .orElse(null);
             String guildName = "Guild not found";
             String channelName = "Channel not found";
             if (channel != null) {
@@ -68,8 +69,9 @@ public class RunningCommand extends BaseCommand implements IOwnerRestricted {
             eb.addField("Guild & Channel", guildName + "\n" + channelName + "\n" + game.getChannelId(), true);
 
             eb.addField("Started", TextchatUtils.toBerlinTime(game.getStartTime()), true);
-            if (channel != null)
+            if (channel != null) {
                 eb.addField("Invite", TextchatUtils.getOrCreateInviteLinkForGuild(channel.getGuild(), channel), true);
+            }
 
             context.reply(eb.build());
         }

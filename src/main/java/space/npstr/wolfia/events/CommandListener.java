@@ -19,11 +19,13 @@ package space.npstr.wolfia.events;
 
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import org.springframework.stereotype.Component;
 import space.npstr.wolfia.commands.CommandHandler;
 
 /**
  * Created by npstr on 25.08.2016
  */
+@Component
 public class CommandListener extends ListenerAdapter {
 
     public CommandListener() {

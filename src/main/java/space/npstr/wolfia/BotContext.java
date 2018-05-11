@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import space.npstr.wolfia.config.properties.ListingsConfig;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.Database;
+import space.npstr.wolfia.discord.DiscordEntityProvider;
 import space.npstr.wolfia.game.AvailablePrivateGuildQueue;
 
 /**
@@ -37,13 +38,16 @@ public class BotContext {
     private final Database database;
     private final WolfiaConfig wolfiaConfig;
     private final ListingsConfig listingsConfig;
+    private final DiscordEntityProvider discordEntityProvider;
     private final AvailablePrivateGuildQueue availablePrivateGuildQueue;
 
     public BotContext(final Database database, final WolfiaConfig wolfiaConfig, final ListingsConfig listingsConfig,
+                      final DiscordEntityProvider discordEntityProvider,
                       final AvailablePrivateGuildQueue availablePrivateGuildQueue) {
         this.database = database;
         this.wolfiaConfig = wolfiaConfig;
         this.listingsConfig = listingsConfig;
+        this.discordEntityProvider = discordEntityProvider;
         this.availablePrivateGuildQueue = availablePrivateGuildQueue;
     }
 
@@ -57,6 +61,10 @@ public class BotContext {
 
     public ListingsConfig getListingsConfig() {
         return this.listingsConfig;
+    }
+
+    public DiscordEntityProvider getDiscordEntityProvider() {
+        return this.discordEntityProvider;
     }
 
     public AvailablePrivateGuildQueue getAvailablePrivateGuildQueue() {

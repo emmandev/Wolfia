@@ -371,12 +371,17 @@ public abstract class Game {
         if (this.running) {
             throw new IllegalStateException("Cannot start a game that is running already");
         }
-        final TextChannel channel = Wolfia.getTextChannelById(channelId);
-        if (channelId <= 0 || channel == null) {
+
+        if (channelId <= 0) {
             throw new IllegalArgumentException(String.format(
-                    "Cannot start a game with invalid/no channel (channelId: %s) set.", channelId)
+                    "Cannot start a game with invalid channel (channelId: %s) set.", channelId)
             );
         }
+
+        final TextChannel channel = Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(channelId)
+                .orElseThrow(() -> new IllegalArgumentException(String.format(
+                        "Cannot start a game with invalid/no channel (channelId: %s) set.", channelId)
+                ));
         this.channelId = channelId;
         this.guildId = channel.getGuild().getIdLong();
         if (!Games.getInfo(this).getSupportedModes().contains(mode)) {
@@ -555,7 +560,8 @@ public abstract class Game {
     //revert whatever prepareChannel() did in reverse order
     public void resetRolesAndPermissions(final boolean... complete) {
 
-        final TextChannel channel = Wolfia.getTextChannelById(this.channelId);
+        final TextChannel channel = Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(this.channelId)
+                .orElse(null);
         if (channel == null) {
             //we probably left the guild
             log.warn("Could not find channel {} to reset roles and permissions in there", this.channelId);
@@ -632,16 +638,15 @@ public abstract class Game {
         }
         cleanUp();
         Games.remove(this);
-        final TextChannel channel = Wolfia.getTextChannelById(this.channelId);
-        if (channel != null) {
-            RestActions.sendMessage(channel,
-                    String.format("Game has been stopped due to:"
-                                    + "\n`%s`"
-                                    + "\nSorry about that. The issue has been logged and will hopefully be fixed soon."
-                                    + "\nIf you want to help solve this as fast as possible, please join our support guild."
-                                    + "\nSay `%s` to receive an invite.",
-                            reasonMessage, WolfiaConfig.DEFAULT_PREFIX + CommRegistry.COMM_TRIGGER_INVITE));
-        }
+        final String message = reasonMessage;
+        Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(this.channelId)
+                .ifPresent(channel -> RestActions.sendMessage(channel,
+                        String.format("Game has been stopped due to:"
+                                        + "\n`%s`"
+                                        + "\nSorry about that. The issue has been logged and will hopefully be fixed soon."
+                                        + "\nIf you want to help solve this as fast as possible, please join our support guild."
+                                        + "\nSay `%s` to receive an invite.",
+                                message, WolfiaConfig.DEFAULT_PREFIX + CommRegistry.COMM_TRIGGER_INVITE)));
     }
 
     protected boolean isOnlyVillageLeft() {
@@ -682,7 +687,7 @@ public abstract class Game {
         }
 
         if (gameEnding) {
-            this.gameStats.addAction(simpleAction(Wolfia.getSelfUser().getIdLong(), Actions.GAMEEND, -1));
+            this.gameStats.addAction(simpleAction(Launcher.getBotContext().getDiscordEntityProvider().getSelf().getIdLong(), Actions.GAMEEND, -1));
             this.gameStats.setEndTime(System.currentTimeMillis());
 
             if (villageWins) {

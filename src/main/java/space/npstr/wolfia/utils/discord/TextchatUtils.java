@@ -78,15 +78,17 @@ public class TextchatUtils {
 
     //this will not always create a new invite, discord/JDA reuses previously created one
     //so no worries about spammed invites in a channel
-    public static String getOrCreateInviteLinkForChannel(final TextChannel channel, final Operation... onFail) {
-        try {
-            return channel.createInvite().complete().getURL();
-        } catch (final PermissionException ignored) {
-        }
-        try {
-            final List<Invite> invites = channel.getInvites().complete();
-            if (!invites.isEmpty()) return invites.get(0).getURL();
-        } catch (final PermissionException ignored) {
+    public static String getOrCreateInviteLinkForChannel(@Nullable final TextChannel channel, final Operation... onFail) {
+        if (channel != null) {
+            try {
+                return channel.createInvite().complete().getURL();
+            } catch (final PermissionException ignored) {
+            }
+            try {
+                final List<Invite> invites = channel.getInvites().complete();
+                if (!invites.isEmpty()) return invites.get(0).getURL();
+            } catch (final PermissionException ignored) {
+            }
         }
 
         // if we reached this point, we failed at creating an invite for this channel

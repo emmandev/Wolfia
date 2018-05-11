@@ -25,7 +25,7 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.User;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.sqlsauce.entities.discord.DiscordUser;
-import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.db.entities.CachedUser;
 import space.npstr.wolfia.game.definitions.Alignments;
 import space.npstr.wolfia.game.definitions.Item;
@@ -39,6 +39,7 @@ import space.npstr.wolfia.utils.discord.TextchatUtils;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -114,15 +115,17 @@ public class Player {
      */
     @Nonnull
     public String getName() {
-        final User user = Wolfia.getUserById(this.userId);
-        if (user != null) {
-            return user.getName();
-        }
-        try {
-            return CachedUser.load(this.userId).getName();
-        } catch (final DatabaseException e) {
-            return DiscordUser.UNKNOWN_NAME;
-        }
+        return Launcher.getBotContext().getDiscordEntityProvider().getUserById(this.userId)
+                .map(User::getName)
+                .orElseGet(
+                        () -> {
+                            try {
+                                return CachedUser.load(this.userId).getName();
+                            } catch (final DatabaseException e) {
+                                return DiscordUser.UNKNOWN_NAME;
+                            }
+                        }
+                );
     }
 
     /**
@@ -131,9 +134,9 @@ public class Player {
      */
     @Nonnull
     public String getNick() {
-        final Guild guild = Wolfia.getGuildById(this.guildId);
-        if (guild != null) {
-            final Member member = guild.getMemberById(this.userId);
+        final Optional<Guild> guild = Launcher.getBotContext().getDiscordEntityProvider().getGuildById(this.guildId);
+        if (guild.isPresent()) {
+            final Member member = guild.get().getMemberById(this.userId);
             if (member != null) {
                 return member.getEffectiveName();
             }
@@ -158,9 +161,9 @@ public class Player {
      */
     @Nonnull
     public String bothNamesFormatted() {
-        final Guild guild = Wolfia.getGuildById(this.guildId);
-        if (guild != null) {
-            final Member member = guild.getMemberById(this.userId);
+        final Optional<Guild> guild = Launcher.getBotContext().getDiscordEntityProvider().getGuildById(this.guildId);
+        if (guild.isPresent()) {
+            final Member member = guild.get().getMemberById(this.userId);
             if (member != null) {
                 return formatNameAndNick(member.getUser().getName(), member.getNickname());
             }
@@ -257,11 +260,10 @@ public class Player {
      * if the user is not present in the bot
      */
     public void sendMessage(@Nonnull final Message message, @Nonnull final Consumer<Throwable> onFail) {
-        final User user = Wolfia.getUserById(this.userId);
-        if (user != null) {
-            RestActions.sendPrivateMessage(user, message, null, onFail);
-        } else {
-            onFail.accept(new UserNotPresentException(this.userId));
-        }
+        Launcher.getBotContext().getDiscordEntityProvider().getUserById(this.userId)
+                .ifPresentOrElse(
+                        user -> RestActions.sendPrivateMessage(user, message, null, onFail),
+                        () -> onFail.accept(new UserNotPresentException(this.userId))
+                );
     }
 }

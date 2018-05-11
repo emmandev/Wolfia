@@ -22,7 +22,6 @@ import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.Guild;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.wolfia.Launcher;
-import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.Context;
 import space.npstr.wolfia.db.ColumnMapper;
 import space.npstr.wolfia.db.entities.CachedGuild;
@@ -151,7 +150,7 @@ public class StatsProvider {
         //add them to the embed
         EmbedBuilder eb = Context.getDefaultEmbedBuilder();
         eb.setTitle("Wolfia stats:");
-        eb.setThumbnail(Wolfia.getSelfUser().getAvatarUrl());
+        eb.setThumbnail(Launcher.getBotContext().getDiscordEntityProvider().getSelf().getAvatarUrl());
 
         //stats for all games:
         eb.addBlankField(false);
@@ -208,7 +207,7 @@ public class StatsProvider {
 
         //add them to the embed
         EmbedBuilder eb = Context.getDefaultEmbedBuilder();
-        final Guild guild = Wolfia.getGuildById(guildId);
+        final Guild guild = Launcher.getBotContext().getDiscordEntityProvider().getGuildById(guildId).orElse(null);
         final CachedGuild cachedGuild = Launcher.getBotContext().getDatabase().getWrapper().findApplyAndMerge(CachedGuild.key(guildId), eg -> eg.set(guild));
         eb.setTitle(cachedGuild.getName() + "'s Wolfia stats");
         eb.setThumbnail(cachedGuild.getAvatarUrl());

@@ -17,17 +17,21 @@
 
 package space.npstr.wolfia.commands.util;
 
+import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDAInfo;
 import net.dv8tion.jda.core.entities.User;
 import space.npstr.wolfia.App;
-import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.Context;
+import space.npstr.wolfia.discord.DiscordEntityProvider;
 import space.npstr.wolfia.game.definitions.Games;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 
 /**
@@ -50,7 +54,9 @@ public class InfoCommand extends BaseCommand {
 
     @Override
     public boolean execute(@Nonnull final CommandContext context) {
-        final User owner = Wolfia.getUserById(App.OWNER_ID);
+        final DiscordEntityProvider discordEntityProvider = Launcher.getBotContext().getDiscordEntityProvider();
+        final Optional<User> owner = discordEntityProvider.getUserById(App.OWNER_ID);
+        final ShardManager shardManager = discordEntityProvider.getShardManager();
         String maStats = "```\n";
         maStats += "Reserved memory:        " + Runtime.getRuntime().totalMemory() / 1000000 + "MB\n";
         maStats += "-> Of which is used:    " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000 + "MB\n";
@@ -61,18 +67,18 @@ public class InfoCommand extends BaseCommand {
 
         String botInfo = "```\n";
         botInfo += "Games being played:     " + Games.getRunningGamesCount() + "\n";
-        botInfo += "Known servers:          " + Wolfia.getGuildsAmount() + "\n";
-        botInfo += "Known users in servers: " + Wolfia.getUsersAmount() + "\n";
+        botInfo += "Known servers:          " + shardManager.getGuildCache().size() + "\n";
+        botInfo += "Known users in servers: " + shardManager.getUserCache().size() + "\n"; //UnifiedShardCacheViewImpl calls distinct for us
         botInfo += "Version:                " + App.VERSION + "\n";
-        botInfo += "JDA responses total:    " + Wolfia.getResponseTotal() + "\n";
+        botInfo += "JDA responses total:    " + shardManager.getShards().stream().mapToLong(JDA::getResponseTotal).sum() + "\n";
         botInfo += "JDA version:            " + JDAInfo.VERSION + "\n";
-        if (owner != null) {
-            botInfo += "Bot owner:              " + owner.getName() + "#" + owner.getDiscriminator() + "\n";
+        if (owner.isPresent()) {
+            botInfo += "Bot owner:              " + owner.get().getName() + "#" + owner.get().getDiscriminator() + "\n";
         }
         botInfo += "```";
 
         final EmbedBuilder eb = Context.getDefaultEmbedBuilder();
-        final User self = Wolfia.getSelfUser();
+        final User self = discordEntityProvider.getSelf();
         eb.setThumbnail(self.getEffectiveAvatarUrl());
         eb.setAuthor(self.getName(), App.SITE_LINK, self.getEffectiveAvatarUrl());
         eb.setTitle(self.getName() + " General Stats", App.SITE_LINK);

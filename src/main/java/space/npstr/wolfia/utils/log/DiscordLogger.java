@@ -24,6 +24,7 @@ import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.utils.discord.RestActions;
 
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -71,18 +72,20 @@ public class DiscordLogger {
                 Thread.sleep(1000);
             }
 
-            TextChannel channel = Wolfia.getTextChannelById(Launcher.getBotContext().getWolfiaConfig().getLogChannelId());
-            while (channel == null) {
-                Thread.sleep(1000);
-                channel = Wolfia.getTextChannelById(Launcher.getBotContext().getWolfiaConfig().getLogChannelId());
-            }
+            Optional<TextChannel> channel;
+            do {
+                channel = Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(Launcher.getBotContext().getWolfiaConfig().getLogChannelId());
+                if (!channel.isPresent()) {
+                    Thread.sleep(1000);
+                }
+            } while (!channel.isPresent());
 
             final Consumer<Message> onSuccess = ignored -> log.info(message);//log into file
             final Consumer<Throwable> onFail = t -> {
                 log.error("Exception when sending discord logger message", t);
                 log(message);//readd it to the queue
             };
-            RestActions.sendMessage(channel, message, onSuccess, onFail);
+            RestActions.sendMessage(channel.get(), message, onSuccess, onFail);
 
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();

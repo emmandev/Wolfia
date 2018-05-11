@@ -31,7 +31,7 @@ import net.dv8tion.jda.core.requests.RestAction;
 import net.dv8tion.jda.core.requests.restaction.PermissionOverrideAction;
 import net.dv8tion.jda.core.utils.PermissionUtil;
 import space.npstr.wolfia.App;
-import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.game.definitions.Scope;
 import space.npstr.wolfia.utils.UserFriendlyException;
 
@@ -262,7 +262,7 @@ public class RoleAndPermissionUtils {
         if (permissionOverride != null && permissionOverride.getAllowed().isEmpty() && permissionOverride.getDenied().isEmpty()) {
             return permissionOverride.delete();
         } else {
-            return new RestAction.EmptyRestAction<>(Wolfia.getFirstJda(), null);
+            return new RestAction.EmptyRestAction<>(Launcher.getBotContext().getDiscordEntityProvider().anyShard().orElseThrow(), null);
         }
     }
 

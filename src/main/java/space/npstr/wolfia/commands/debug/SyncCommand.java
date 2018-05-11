@@ -18,13 +18,13 @@
 package space.npstr.wolfia.commands.debug;
 
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Guild;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.sqlsauce.entities.discord.DiscordGuild;
 import space.npstr.sqlsauce.entities.discord.DiscordUser;
 import space.npstr.wolfia.Launcher;
-import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.IOwnerRestricted;
@@ -73,12 +73,13 @@ public class SyncCommand extends BaseCommand implements IOwnerRestricted {
     public boolean execute(@Nonnull final CommandContext context) throws DatabaseException {
 
         boolean actionFound = false;
+        final ShardManager shardManager = Launcher.getBotContext().getDiscordEntityProvider().getShardManager();
         if (context.msg.getContentRaw().toLowerCase().contains(ACTION_GUILDS)) {
             actionFound = true;
             context.reply("Starting guilds sync.");
             syncGuilds(
                     this.syncService,
-                    Wolfia.getShards().stream().flatMap(jda -> jda.getGuildCache().stream()),
+                    shardManager.getShardCache().stream().flatMap(jda -> jda.getGuildCache().stream()),
                     (duration, amount) -> context.reply(amount + " guilds synced in " + duration + "ms")
             );
         }
@@ -87,7 +88,7 @@ public class SyncCommand extends BaseCommand implements IOwnerRestricted {
             actionFound = true;
             context.reply("Starting users caching.");
             cacheUsers(
-                    Wolfia.getShards(),
+                    shardManager.getShardCache().stream(),
                     result -> context.reply("Shard " + result.shardId + ": "
                             + result.amount + " users cached in "
                             + result.duration + "ms")
@@ -120,7 +121,7 @@ public class SyncCommand extends BaseCommand implements IOwnerRestricted {
             final Collection<DatabaseException> guildSyncDbExceptions = DiscordGuild.sync(
                     Launcher.getBotContext().getDatabase().getWrapper(),
                     guilds.peek(__ -> count.incrementAndGet()),
-                    (guildId) -> Wolfia.getGuildById(guildId) != null,
+                    (guildId) -> Launcher.getBotContext().getDiscordEntityProvider().getGuildById(guildId).isPresent(),
                     CachedGuild.class
             );
             if (resultConsumer != null) {
@@ -141,34 +142,32 @@ public class SyncCommand extends BaseCommand implements IOwnerRestricted {
      * @param resultConsumer
      *         Returns how long which shard took and how many users/members were processed
      */
-    public void cacheUsers(@Nonnull final Collection<JDA> shards, @Nullable final Consumer<SyncResult> resultConsumer) {
-        for (final JDA jda : shards) {
-            this.syncService.execute(() -> {
-                final long started = System.currentTimeMillis();
-                final AtomicInteger count = new AtomicInteger(0);
-                log.info("Caching users for shard {} started", jda.getShardInfo().getShardId());
-                //sync user cache
-                final Collection<DatabaseException> userCacheDbExceptions = DiscordUser.cacheAll(
-                        Launcher.getBotContext().getDatabase().getWrapper(),
-                        jda.getGuildCache().stream()
-                                .flatMap(guild -> guild.getMemberCache().stream())
-                                .peek(__ -> count.incrementAndGet()),
-                        CachedUser.class
-                );
-                if (!userCacheDbExceptions.isEmpty()) {
-                    log.error("{} db exceptions thrown when caching users after start", userCacheDbExceptions.size());
-                    for (final DatabaseException e : userCacheDbExceptions) {
-                        log.error("Db blew up when caching user", e);
-                    }
+    public void cacheUsers(@Nonnull final Stream<JDA> shards, @Nullable final Consumer<SyncResult> resultConsumer) {
+        shards.forEach(jda -> this.syncService.execute(() -> {
+            final long started = System.currentTimeMillis();
+            final AtomicInteger count = new AtomicInteger(0);
+            log.info("Caching users for shard {} started", jda.getShardInfo().getShardId());
+            //sync user cache
+            final Collection<DatabaseException> userCacheDbExceptions = DiscordUser.cacheAll(
+                    Launcher.getBotContext().getDatabase().getWrapper(),
+                    jda.getGuildCache().stream()
+                            .flatMap(guild -> guild.getMemberCache().stream())
+                            .peek(__ -> count.incrementAndGet()),
+                    CachedUser.class
+            );
+            if (!userCacheDbExceptions.isEmpty()) {
+                log.error("{} db exceptions thrown when caching users after start", userCacheDbExceptions.size());
+                for (final DatabaseException e : userCacheDbExceptions) {
+                    log.error("Db blew up when caching user", e);
                 }
-                final int shardId = jda.getShardInfo().getShardId();
-                final long duration = System.currentTimeMillis() - started;
-                log.info("Caching users for shard {} done in {}ms", shardId, duration);
-                if (resultConsumer != null) {
-                    resultConsumer.accept(new SyncResult(shardId, duration, count.get()));
-                }
-            });
-        }
+            }
+            final int shardId = jda.getShardInfo().getShardId();
+            final long duration = System.currentTimeMillis() - started;
+            log.info("Caching users for shard {} done in {}ms", shardId, duration);
+            if (resultConsumer != null) {
+                resultConsumer.accept(new SyncResult(shardId, duration, count.get()));
+            }
+        }));
     }
 
     public static final class SyncResult {

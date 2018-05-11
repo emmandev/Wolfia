@@ -182,7 +182,8 @@ public class Setup extends SaucedEntity<Long, Setup> {
         cleanUpInnedPlayers();
 
         final NiceEmbedBuilder neb = NiceEmbedBuilder.defaultBuilder();
-        final TextChannel channel = Wolfia.getTextChannelById(this.channelId);
+        final TextChannel channel = Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(this.channelId)
+                .orElse(null);
         if (channel == null) {
             neb.addField("Could not find channel with id " + this.channelId, "", false);
             return neb.build();
@@ -284,10 +285,7 @@ public class Setup extends SaucedEntity<Long, Setup> {
     }
 
     private TextChannel getThisChannel() {
-        final TextChannel tc = Wolfia.getTextChannelById(this.channelId);
-        if (tc == null) {
-            throw new NullPointerException(String.format("Could not find channel %s of setup", this.channelId));
-        }
-        return tc;
+        return Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(this.channelId)
+                .orElseThrow(() -> new NullPointerException(String.format("Could not find channel %s of setup", this.channelId)));
     }
 }

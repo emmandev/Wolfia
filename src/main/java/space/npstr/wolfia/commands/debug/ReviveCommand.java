@@ -18,9 +18,10 @@
 package space.npstr.wolfia.commands.debug;
 
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import space.npstr.sqlsauce.DatabaseException;
-import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.IOwnerRestricted;
@@ -60,12 +61,13 @@ public class ReviveCommand extends BaseCommand implements IOwnerRestricted {
             return false;
         }
 
-        final JDA jda = Wolfia.getShardManager().getShardById(shardId);
+        final ShardManager shardManager = Launcher.getBotContext().getDiscordEntityProvider().getShardManager();
+        final JDA jda = shardManager.getShardById(shardId);
         if (jda == null) {
             context.reply("No shard with id " + shardId + " found.");
             return false;
         }
-        Wolfia.getShardManager().restart(shardId);
+        shardManager.restart(shardId);
         log.info("Reviving shard {}", shardId);
         context.reply("Reviving shard  " + shardId);
         return true;

@@ -27,7 +27,7 @@ import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import space.npstr.sqlsauce.entities.discord.DiscordUser;
 import space.npstr.wolfia.App;
-import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.Launcher;
 
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nonnull;
@@ -143,12 +143,9 @@ public class MessageContext extends Context {
             }
         }
         //fallback to global user lookup
-        final User u = Wolfia.getUserById(userId);
-        if (u != null) {
-            return u.getName();
-        } else {
-            return DiscordUser.UNKNOWN_NAME; //todo db lookup
-        }
+        return Launcher.getBotContext().getDiscordEntityProvider().getUserById(userId)
+                .map(User::getName)
+                .orElse(DiscordUser.UNKNOWN_NAME); //todo db lookup
     }
 
     /**

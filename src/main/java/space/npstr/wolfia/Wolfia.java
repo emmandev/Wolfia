@@ -19,27 +19,13 @@ package space.npstr.wolfia;
 
 import ch.qos.logback.classic.LoggerContext;
 import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.entities.Game;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.SelfUser;
 import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.hooks.EventListener;
-import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
-import space.npstr.sqlsauce.DatabaseWrapper;
-import space.npstr.sqlsauce.jda.listeners.GuildCachingListener;
-import space.npstr.sqlsauce.jda.listeners.UserMemberCachingListener;
 import space.npstr.wolfia.commands.debug.SyncCommand;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
-import space.npstr.wolfia.db.entities.CachedGuild;
-import space.npstr.wolfia.db.entities.CachedUser;
-import space.npstr.wolfia.events.CommandListener;
-import space.npstr.wolfia.events.InternalListener;
-import space.npstr.wolfia.events.WolfiaGuildListener;
 import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.tools.ExceptionLoggingExecutor;
 import space.npstr.wolfia.utils.discord.Emojis;
@@ -47,10 +33,8 @@ import space.npstr.wolfia.utils.discord.TextchatUtils;
 import space.npstr.wolfia.utils.log.DiscordLogger;
 import space.npstr.wolfia.utils.log.LogTheStackException;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -67,17 +51,13 @@ import java.util.concurrent.TimeoutException;
 public class Wolfia {
 
     public static final long START_TIME = System.currentTimeMillis();
-    private static final OkHttpClient defaultHttpClient = getDefaultHttpClientBuilder().build();
     //todo find a better way to execute tasks; java's built in ScheduledExecutorService is rather crappy for many reasons; until then a big-sized pool size will suffice to make sure tasks get executed when they are due
     public static final ExceptionLoggingExecutor executor = new ExceptionLoggingExecutor(100, "main-scheduled-executor");
 
-
-    private static ShardManager shardManager;
     public static final Thread.UncaughtExceptionHandler uncaughtExceptionHandler
             = (t, e) -> log.error("Uncaught exception in thread {}", t.getName(), e);
 
     private static boolean started = false;
-    private static CommandListener commandListener;
 
     //set up things that are crucial
     //if something fails exit right away
@@ -111,65 +91,19 @@ public class Wolfia {
             System.exit(2);
         }
 
-        final DatabaseWrapper wrapper = Launcher.getBotContext().getDatabase().getWrapper();
-
-        //set up JDA
-        log.info("Setting up JDA and main listener");
-        commandListener = new CommandListener();
-
-//        int recommendedShardCount = 0;
-//        while (recommendedShardCount < 1) {
-//            try {
-//                recommendedShardCount = getRecommendedShardCount(Config.C.discordToken);
-//                log.info("Received recommended shard count: {}", recommendedShardCount);
-//            } catch (final IOException e) {
-//                log.error("Exception when getting recommended shard count, trying again in a bit", e);
-//                Thread.sleep(5000);
-//            }
-//        }
-
-
-        //create all necessary shards
-        try {
-            shardManager = new DefaultShardManagerBuilder()
-                    .setToken(wolfiaConfig.getDiscordToken())
-                    .setGame(Game.playing(App.GAME_STATUS))
-                    .addEventListeners(commandListener)
-                    .addEventListeners(Launcher.getBotContext().getAvailablePrivateGuildQueue().getAll())
-                    .addEventListeners(new UserMemberCachingListener<>(wrapper, CachedUser.class))
-                    .addEventListeners(new GuildCachingListener<>(wrapper, CachedGuild.class))
-                    .addEventListeners(new InternalListener())
-                    .addEventListeners(new WolfiaGuildListener())
-                    .setHttpClientBuilder(getDefaultHttpClientBuilder())
-                    .setEnableShutdownHook(false)
-                    .setAudioEnabled(false)
-                    .build();
-        } catch (final Exception e) {
-            log.error("could not create JDA object, possibly invalid bot token, exiting", e);
-            return;
-        }
-
         //wait for all shards to be online, then start doing things that expect the full bot to be online
         while (!allShardsUp()) {
             Thread.sleep(1000);
         }
         started = true;
 
-        shardManager.getApplicationInfo().queue(
-                App::setAppInfo,
-                t -> log.error("Could not load application info", t));
-
         //sync guild cache
         // this takes a few seconds to do, so do it as the last thing of the main method, or put it into it's own thread
-        SyncCommand.syncGuilds(executor, shardManager.getGuildCache().stream(), null);
+        SyncCommand.syncGuilds(executor, Launcher.getBotContext().getDiscordEntityProvider().getShardManager().getGuildCache().stream(), null);
         //user cache is not synced on each start as it takes a lot of time and resources. see SyncComm for manual triggering
     }
 
     private Wolfia() {
-    }
-
-    public static CommandListener getCommandListener() {
-        return commandListener;
     }
 
     /**
@@ -179,81 +113,38 @@ public class Wolfia {
         return started;
     }
 
-    // ########## JDA wrapper methods, they get 9000% more useful when sharding
-    @Nullable
-    public static Guild getGuildById(final long guildId) {
-        return shardManager.getGuildById(guildId);
-    }
-
-    public static long getGuildsAmount() {
-        return shardManager.getGuildCache().size();
-    }
-
-    @Nullable
-    public static TextChannel getTextChannelById(final long channelId) {
-        return shardManager.getTextChannelById(channelId);
-    }
-
     //this method assumes that the id itself is legit and not a mistake
     // it is an attempt to improve the occasional inconsistency of discord which makes looking up entities a gamble
     // the main feature being the @Nonnull return contract, over the @Nullable contract of looking the entity up in JDA
     //todo what happens if we leave a server? do we get stuck in here? maybe make this throw an exception eventually and exit?
-    @Nonnull
     public static TextChannel fetchTextChannel(final long channelId) {
-        TextChannel tc = Wolfia.getTextChannelById(channelId);
-        while (tc == null) {
-            log.error("Could not find channel {}, retrying in a moment", channelId, new LogTheStackException());
-            try {
-                Thread.sleep(5000);
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
+        Optional<TextChannel> tc;
+        do {
+            tc = Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(channelId);
+
+            if (!tc.isPresent()) {
+                log.error("Could not find channel {}, retrying in a moment", channelId, new LogTheStackException());
+                try {
+                    Thread.sleep(5000);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
-            tc = Wolfia.getTextChannelById(channelId);
-        }
-        return tc;
-    }
+        } while (!tc.isPresent());
 
-    @Nullable
-    public static User getUserById(final long userId) {
-        return shardManager.getUserById(userId);
-    }
-
-    public static long getUsersAmount() {
-        //UnifiedShardCacheViewImpl#stream calls distinct for us
-        return shardManager.getUserCache().stream().count();
-    }
-
-    public static SelfUser getSelfUser() {
-        return getFirstJda().getSelfUser();
+        return tc.get();
     }
 
     public static void addEventListener(final EventListener eventListener) {
-        shardManager.addEventListener(eventListener);
+        Launcher.getBotContext().getDiscordEntityProvider().getShardManager().addEventListener(eventListener);
     }
 
     public static void removeEventListener(final EventListener eventListener) {
-        shardManager.removeEventListener(eventListener);
-    }
-
-    public static long getResponseTotal() {
-        return shardManager.getShards().stream().mapToLong(JDA::getResponseTotal).sum();
-    }
-
-    public static JDA getFirstJda() {
-        return shardManager.getShards().iterator().next();
-    }
-
-    @Nonnull
-    public static Collection<JDA> getShards() {
-        return shardManager.getShards();
-    }
-
-    @Nonnull
-    public static ShardManager getShardManager() {
-        return shardManager;
+        Launcher.getBotContext().getDiscordEntityProvider().getShardManager().removeEventListener(eventListener);
     }
 
     public static boolean allShardsUp() {
+        final ShardManager shardManager = Launcher.getBotContext().getDiscordEntityProvider().getShardManager();
         if (shardManager.getShards().size() < shardManager.getShardsTotal()) {
             return false;
         }
@@ -264,16 +155,6 @@ public class Wolfia {
         }
         return true;
     }
-
-    //returns a general purpose http client builder
-    public static OkHttpClient.Builder getDefaultHttpClientBuilder() {
-        return new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true);
-    }
-
 
     //################# shutdown handling
 
@@ -324,7 +205,7 @@ public class Wolfia {
 
         //shutdown JDA
         log.info("Shutting down shards");
-        shardManager.shutdown();
+        Launcher.getBotContext().getDiscordEntityProvider().getShardManager().shutdown();
 
         //shutdown executors
         log.info("Shutting down executor");
