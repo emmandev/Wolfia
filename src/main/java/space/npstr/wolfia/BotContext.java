@@ -22,6 +22,7 @@ import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.Database;
 import space.npstr.wolfia.discord.DiscordEntityProvider;
 import space.npstr.wolfia.game.AvailablePrivateGuildQueue;
+import space.npstr.wolfia.game.GameRegistry;
 import space.npstr.wolfia.game.tools.Scheduler;
 
 /**
@@ -40,15 +41,17 @@ public class BotContext {
     private final DiscordEntityProvider discordEntityProvider;
     private final Scheduler scheduler;
     private final AvailablePrivateGuildQueue availablePrivateGuildQueue;
+    private final GameRegistry gameRegistry;
 
     public BotContext(final Database database, final WolfiaConfig wolfiaConfig,
                       final DiscordEntityProvider discordEntityProvider, final Scheduler scheduler,
-                      final AvailablePrivateGuildQueue availablePrivateGuildQueue) {
+                      final AvailablePrivateGuildQueue availablePrivateGuildQueue, final GameRegistry gameRegistry) {
         this.database = database;
         this.wolfiaConfig = wolfiaConfig;
         this.discordEntityProvider = discordEntityProvider;
         this.scheduler = scheduler;
         this.availablePrivateGuildQueue = availablePrivateGuildQueue;
+        this.gameRegistry = gameRegistry;
     }
 
     public Database getDatabase() {
@@ -69,5 +72,9 @@ public class BotContext {
 
     public AvailablePrivateGuildQueue getAvailablePrivateGuildQueue() {
         return availablePrivateGuildQueue;
+    }
+
+    public GameRegistry getGameRegistry() {
+        return gameRegistry;
     }
 }

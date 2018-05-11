@@ -24,7 +24,6 @@ import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.GuildCommandContext;
 import space.npstr.wolfia.db.entities.PrivateGuild;
 import space.npstr.wolfia.db.entities.Setup;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 
 import javax.annotation.Nonnull;
@@ -57,7 +56,7 @@ public class StartCommand extends BaseCommand {
             return false;
         }
 
-        if (Games.get(context.textChannel) != null) {
+        if (Launcher.getBotContext().getGameRegistry().get(context.textChannel).isPresent()) {
             context.replyWithMention("please start the next game after the current one is over.");
             return false;
         }

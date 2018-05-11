@@ -17,16 +17,17 @@
 
 package space.npstr.wolfia.commands.debug;
 
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.IOwnerRestricted;
 import space.npstr.wolfia.game.Game;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 import space.npstr.wolfia.utils.UserFriendlyException;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * Created by napster on 24.07.17.
@@ -59,15 +60,15 @@ public class KillGameCommand extends BaseCommand implements IOwnerRestricted {
             return false;
         }
 
-        final Game game = Games.get(channelId);
-        if (game == null) {
+        final Optional<Game> game = Launcher.getBotContext().getGameRegistry().get(channelId);
+        if (!game.isPresent()) {
             context.reply("There is no game registered for channel " + channelId);
             return false;
         }
 
         String reason = String.join(" ", Arrays.copyOfRange(context.args, 1, context.args.length)).trim();
         if (reason.isEmpty()) reason = "Game killed by bot owner.";
-        game.destroy(new UserFriendlyException(reason));
+        game.get().destroy(new UserFriendlyException(reason));
 
         context.reply("Game in channel " + channelId + " destroyed.");
         return true;

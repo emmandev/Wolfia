@@ -1,11 +1,11 @@
 package space.npstr.wolfia.commands.ingame;
 
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.commands.CommRegistry;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.GameCommand;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.game.Game;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 
 import javax.annotation.Nonnull;
@@ -31,7 +31,7 @@ public class CheckCommand extends GameCommand {
         //todo handle a player being part of multiple games properly
         boolean issued = false;
         boolean success = false;
-        for (final Game g : Games.getAll().values()) {
+        for (final Game g : Launcher.getBotContext().getGameRegistry().getAll().values()) {
             if (g.isUserPlaying(commandContext.invoker)) {
                 if (g.issueCommand(commandContext)) {
                     success = true;

@@ -77,7 +77,7 @@ public class SetupCommand extends BaseCommand {
         //is this an attempt to edit the setup?
         if (context.args.length > 1) {
             //is there a game going on?
-            if (Games.get(context.textChannel) != null) {
+            if (Launcher.getBotContext().getGameRegistry().get(context.textChannel).isPresent()) {
                 context.replyWithMention("there is a game going on in this channel, please wait until it is over to adjust the setup!");
                 return false;
             }

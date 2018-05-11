@@ -21,10 +21,10 @@ import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.GuildCommandContext;
 import space.npstr.wolfia.game.Game;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 /**
  * Created by napster on 27.05.17.
@@ -50,13 +50,13 @@ public class RolePmCommand extends BaseCommand {
             return false;
         }
 
-        final Game game = Games.get(context.textChannel);
-        if (game == null) {
+        final Optional<Game> gameOpt = getGame(context);
+        if (!gameOpt.isPresent()) {
             context.replyWithMention("there is no game going on in here for which I could send you a role pm.");
             return false;
         }
 
-
+        final Game game = gameOpt.get();
         if (!game.isUserPlaying(context.member)) {
             context.replyWithMention("you aren't playing in this game.");
             return false;

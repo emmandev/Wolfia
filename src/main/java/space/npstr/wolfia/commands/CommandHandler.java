@@ -23,10 +23,9 @@ import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.wolfia.App;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.events.WolfiaGuildListener;
-import space.npstr.wolfia.game.Game;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 import space.npstr.wolfia.utils.UserFriendlyException;
 import space.npstr.wolfia.utils.discord.RestActions;
@@ -58,9 +57,8 @@ public class CommandHandler {
         }
 
         //update user stats
-        final Game g = Games.get(event.getChannel().getIdLong());
-        if (g != null) g.userPosted(event.getMessage());
-
+        Launcher.getBotContext().getGameRegistry().get(event.getChannel().getIdLong())
+                .ifPresent(game -> game.userPosted(event.getMessage()));
 
         final CommandContext context;
         try {

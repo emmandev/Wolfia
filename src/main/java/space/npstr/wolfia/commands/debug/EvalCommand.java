@@ -134,7 +134,7 @@ public class EvalCommand extends BaseCommand implements IOwnerRestricted {
         this.engine.put("member", context.getGuild() != null ? context.getGuild().getSelfMember() : null);
         this.engine.put("message", context.msg);
         this.engine.put("guild", context.getGuild());
-        this.engine.put("game", Games.get(context.channel.getIdLong()));
+        this.engine.put("game", Launcher.getBotContext().getGameRegistry().get(context.channel.getIdLong()).orElse(null));
         this.engine.put("setup", Launcher.getBotContext().getDatabase().getWrapper().getOrCreate(Setup.key(context.channel.getIdLong())));
         this.engine.put("games", Games.class);//access the static methods like this from eval: games.static.myStaticMethod()
         this.engine.put("db", Launcher.getBotContext().getDatabase());

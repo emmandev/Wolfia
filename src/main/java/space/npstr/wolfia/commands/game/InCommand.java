@@ -27,7 +27,6 @@ import space.npstr.wolfia.commands.GuildCommandContext;
 import space.npstr.wolfia.db.entities.Ban;
 import space.npstr.wolfia.db.entities.PrivateGuild;
 import space.npstr.wolfia.db.entities.Setup;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.definitions.Scope;
 
 import javax.annotation.Nonnull;
@@ -60,15 +59,15 @@ public class InCommand extends BaseCommand {
             return false;
         }
 
-        //is there a game going on?
-        if (Games.get(context.textChannel) != null) {
-            context.replyWithMention("the game has already started! Please wait until it is over to join.");
-            return false;
-        }
-
         //check for private guilds where we dont want games to be started
         if (PrivateGuild.isPrivateGuild(context.guild)) {
             context.replyWithMention("you can't play games in a private guild.");
+            return false;
+        }
+
+        //is there a game going on?
+        if (Launcher.getBotContext().getGameRegistry().get(context.textChannel).isPresent()) {
+            context.replyWithMention("the game has already started! Please wait until it is over to join.");
             return false;
         }
 

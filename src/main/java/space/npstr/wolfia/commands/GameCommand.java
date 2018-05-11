@@ -19,10 +19,10 @@ package space.npstr.wolfia.commands;
 
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.game.Game;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 /**
  * Created by napster on 21.05.17.
@@ -42,23 +42,13 @@ public abstract class GameCommand extends BaseCommand {
             return false;
         }
 
-        Game game = Games.get(context.textChannel);
-        if (game == null) {
-            //private guild?
-            for (final Game g : Games.getAll().values()) {
-                if (context.guild.getIdLong() == g.getPrivateGuildId()) {
-                    game = g;
-                    break;
-                }
-            }
-
-            if (game == null) {
-                context.replyWithMention(String.format("there is no game currently going on in here. Say `%s` to get started!",
-                        WolfiaConfig.DEFAULT_PREFIX + CommRegistry.COMM_TRIGGER_HELP));
-                return false;
-            }
+        final Optional<Game> game = getGame(context);
+        if (!game.isPresent()) {
+            context.replyWithMention(String.format("there is no game currently going on in here. Say `%s` to get started!",
+                    WolfiaConfig.DEFAULT_PREFIX + CommRegistry.COMM_TRIGGER_HELP));
+            return false;
         }
 
-        return game.issueCommand(context);
+        return game.get().issueCommand(context);
     }
 }

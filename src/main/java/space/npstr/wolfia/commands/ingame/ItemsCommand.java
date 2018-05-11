@@ -18,13 +18,13 @@
 package space.npstr.wolfia.commands.ingame;
 
 import net.dv8tion.jda.core.entities.ChannelType;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.commands.CommRegistry;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.GameCommand;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.game.Game;
 import space.npstr.wolfia.game.Player;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 
 import javax.annotation.Nonnull;
@@ -58,7 +58,7 @@ public class ItemsCommand extends GameCommand {
 
         //todo handle a player being part of multiple games properly
         boolean issued = false;
-        for (final Game g : Games.getAll().values()) {
+        for (final Game g : Launcher.getBotContext().getGameRegistry().getAll().values()) {
             if (g.isUserPlaying(context.invoker) && g.isLiving(context.invoker)) {
                 final Player p = g.getPlayer(context.invoker);
                 if (p.items.isEmpty()) {

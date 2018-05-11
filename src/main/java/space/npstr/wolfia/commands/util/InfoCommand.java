@@ -28,7 +28,6 @@ import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.Context;
 import space.npstr.wolfia.discord.DiscordEntityProvider;
-import space.npstr.wolfia.game.definitions.Games;
 
 import javax.annotation.Nonnull;
 import java.util.Optional;
@@ -66,7 +65,7 @@ public class InfoCommand extends BaseCommand {
 
 
         String botInfo = "```\n";
-        botInfo += "Games being played:     " + Games.getRunningGamesCount() + "\n";
+        botInfo += "Games being played:     " + Launcher.getBotContext().getGameRegistry().getRunningGamesCount() + "\n";
         botInfo += "Known servers:          " + shardManager.getGuildCache().size() + "\n";
         botInfo += "Known users in servers: " + shardManager.getUserCache().size() + "\n"; //UnifiedShardCacheViewImpl calls distinct for us
         botInfo += "Version:                " + App.VERSION + "\n";

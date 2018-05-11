@@ -24,13 +24,16 @@ import net.dv8tion.jda.core.events.channel.text.TextChannelDeleteEvent;
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import org.springframework.stereotype.Component;
 import space.npstr.wolfia.App;
 import space.npstr.wolfia.game.Game;
-import space.npstr.wolfia.game.definitions.Games;
+import space.npstr.wolfia.game.GameRegistry;
 import space.npstr.wolfia.utils.UserFriendlyException;
 import space.npstr.wolfia.utils.discord.Emojis;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
 import space.npstr.wolfia.utils.log.DiscordLogger;
+
+import java.util.Optional;
 
 /**
  * Created by napster on 23.07.17.
@@ -38,7 +41,14 @@ import space.npstr.wolfia.utils.log.DiscordLogger;
  * Events listened to in here are used for bot internal, non-game purposes
  */
 @Slf4j
+@Component
 public class InternalListener extends ListenerAdapter {
+
+    private final GameRegistry gameRegistry;
+
+    public InternalListener(final GameRegistry gameRegistry) {
+        this.gameRegistry = gameRegistry;
+    }
 
     @Override
     public void onReady(final ReadyEvent event) {
@@ -60,7 +70,7 @@ public class InternalListener extends ListenerAdapter {
 
         int gamesDestroyed = 0;
         //destroy games running in the server that was left
-        for (final Game game : Games.getAll().values()) {
+        for (final Game game : gameRegistry.getAll().values()) {
             if (game.getGuildId() == guild.getIdLong()) {
                 try {
                     game.destroy(new UserFriendlyException("Bot was kicked from the server " + guild.getName() + " " + guild.getIdLong()));
@@ -81,12 +91,13 @@ public class InternalListener extends ListenerAdapter {
         final long channelId = event.getChannel().getIdLong();
         final long guildId = event.getGuild().getIdLong();
 
-        if (Games.get(channelId) != null) {
+        final Optional<Game> game = gameRegistry.get(channelId);
+        if (game.isPresent()) {
             DiscordLogger.getLogger().log("%s `%s` Destroying game due to deleted channel **#%s** `%s` in guild **%s** `%s`.",
                     Emojis.BOOM, TextchatUtils.berlinTime(),
                     event.getChannel().getName(), channelId, event.getGuild().getName(), guildId);
 
-            Games.get(channelId).destroy(new UserFriendlyException("Main game channel `%s` in guild `%s` was deleted", channelId, guildId));
+            game.get().destroy(new UserFriendlyException("Main game channel `%s` in guild `%s` was deleted", channelId, guildId));
         }
     }
 }

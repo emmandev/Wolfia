@@ -637,7 +637,7 @@ public abstract class Game {
             log.error(logMessage, reason);
         }
         cleanUp();
-        Games.remove(this);
+        Launcher.getBotContext().getGameRegistry().remove(this);
         final String message = reasonMessage;
         Launcher.getBotContext().getDiscordEntityProvider().getTextChannelById(this.channelId)
                 .ifPresent(channel -> RestActions.sendMessage(channel,
@@ -719,10 +719,10 @@ public abstract class Game {
             // removing the game from the registry has to be the very last statement, since if a restart is queued, it
             // waits for an empty games registry
             RestActions.sendMessage(fetchGameChannel(), out,
-                    ignoredMessage -> Games.remove(this),
+                    ignoredMessage -> Launcher.getBotContext().getGameRegistry().remove(this),
                     throwable -> {
                         log.error("Failed to send last message of game #{}", this.gameStats.getId(), throwable);
-                        Games.remove(this);
+                        Launcher.getBotContext().getGameRegistry().remove(this);
                     });
             return true;
         }

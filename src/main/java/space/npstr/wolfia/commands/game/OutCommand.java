@@ -26,7 +26,6 @@ import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.GuildCommandContext;
 import space.npstr.wolfia.db.entities.PrivateGuild;
 import space.npstr.wolfia.db.entities.Setup;
-import space.npstr.wolfia.game.definitions.Games;
 
 import javax.annotation.Nonnull;
 
@@ -54,7 +53,7 @@ public class OutCommand extends BaseCommand {
             return false;
         }
 
-        if (Games.get(context.textChannel) != null) {
+        if (Launcher.getBotContext().getGameRegistry().get(context.textChannel).isPresent()) {
             context.replyWithMention("please sign up/sign out for the next game after the current one is over.");
             return false;
         }

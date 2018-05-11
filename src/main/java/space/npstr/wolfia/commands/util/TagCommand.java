@@ -33,7 +33,6 @@ import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.GuildCommandContext;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.entities.ChannelSettings;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
 
@@ -94,7 +93,7 @@ public class TagCommand extends BaseCommand {
 
         if (action == TagAction.TAG) {
 
-            if (Games.get(context.textChannel) != null) {
+            if (Launcher.getBotContext().getGameRegistry().get(context.textChannel).isPresent()) {
                 context.replyWithMention("I will not post the tag list during an ongoing game.");
                 return false;
             }

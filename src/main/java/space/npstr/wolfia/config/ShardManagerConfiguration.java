@@ -49,7 +49,8 @@ public class ShardManagerConfiguration {
     @Bean(destroyMethod = "") //we manage the lifecycle ourselves tyvm, see shutdown hook in the launcher / wolfia class
     public ShardManager shardManager(final WolfiaConfig wolfiaConfig, final OkHttpClient.Builder httpClientBuilder,
                                      final Database database, final CommandListener commandListener,
-                                     final AvailablePrivateGuildQueue availablePrivateGuildQueue)
+                                     final AvailablePrivateGuildQueue availablePrivateGuildQueue,
+                                     final InternalListener internalListener)
             throws LoginException {
         return new DefaultShardManagerBuilder()
                 .setToken(wolfiaConfig.getDiscordToken())
@@ -58,7 +59,7 @@ public class ShardManagerConfiguration {
                 .addEventListeners(availablePrivateGuildQueue.getAll().toArray())
                 .addEventListeners(new UserMemberCachingListener<>(database.getWrapper(), CachedUser.class))
                 .addEventListeners(new GuildCachingListener<>(database.getWrapper(), CachedGuild.class))
-                .addEventListeners(new InternalListener())
+                .addEventListeners(internalListener)
                 .addEventListeners(new WolfiaGuildListener())
                 .setHttpClientBuilder(httpClientBuilder)
                 .setEnableShutdownHook(false)

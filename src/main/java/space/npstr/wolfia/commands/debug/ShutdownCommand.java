@@ -18,11 +18,11 @@
 package space.npstr.wolfia.commands.debug;
 
 import lombok.extern.slf4j.Slf4j;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.IOwnerRestricted;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.utils.discord.Emojis;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
 import space.npstr.wolfia.utils.log.DiscordLogger;
@@ -58,9 +58,10 @@ public class ShutdownCommand extends BaseCommand implements IOwnerRestricted {
 
     @Override
     public synchronized boolean execute(@Nonnull final CommandContext context) {
+        final int runningGamesCount = Launcher.getBotContext().getGameRegistry().getRunningGamesCount();
         if (isShutdownQueued()) {
             context.replyWithName(String.format("shutdown has been queued already! **%s** games still running.",
-                    Games.getRunningGamesCount()));
+                    runningGamesCount));
             return false;
         }
 
@@ -68,7 +69,7 @@ public class ShutdownCommand extends BaseCommand implements IOwnerRestricted {
         final int exitCode = isRestart ? EXIT_CODE_RESTART : EXIT_CODE_SHUTDOWN;
 
         final String message = String.format("queueing %s! **%s** games are still running.",
-                isRestart ? "restart" : "shutdown", Games.getRunningGamesCount());
+                isRestart ? "restart" : "shutdown", runningGamesCount);
         context.replyWithMention(message, __ -> {
             final Thread t = new Thread(() -> shutdown(exitCode), "shutdown-thread");
             t.setUncaughtExceptionHandler(Wolfia.uncaughtExceptionHandler);

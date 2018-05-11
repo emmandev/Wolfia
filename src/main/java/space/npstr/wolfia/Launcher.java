@@ -36,7 +36,7 @@ import space.npstr.wolfia.commands.debug.SyncCommand;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.Database;
 import space.npstr.wolfia.discord.DiscordEntityProvider;
-import space.npstr.wolfia.game.definitions.Games;
+import space.npstr.wolfia.game.GameRegistry;
 import space.npstr.wolfia.game.tools.Scheduler;
 import space.npstr.wolfia.utils.GitRepoState;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
@@ -102,17 +102,17 @@ public class Launcher implements ApplicationRunner {
 
     public Launcher(final BotContext botContext, final WolfiaConfig wolfiaConfig, final Database database,
                     final DiscordEntityProvider discordEntityProvider, final Scheduler scheduler,
-                    final ShardManager shardManager) {
+                    final ShardManager shardManager, final GameRegistry gameRegistry) {
         Launcher.botContext = botContext;
         this.wolfiaConfig = wolfiaConfig;
         this.database = database;
         this.discordEntityProvider = discordEntityProvider;
         this.scheduler = scheduler;
         this.shutdownHook = new Thread(() -> {
-            log.info("Shutdown hook triggered! {} games still ongoing.", Games.getRunningGamesCount());
+            log.info("Shutdown hook triggered! {} games still ongoing.", gameRegistry.getRunningGamesCount());
             final Future waitForGamesToEnd = scheduler.getScheduler().submit(() -> {
-                while (Games.getRunningGamesCount() > 0) {
-                    log.info("Waiting on {} games to finish.", Games.getRunningGamesCount());
+                while (gameRegistry.getRunningGamesCount() > 0) {
+                    log.info("Waiting on {} games to finish.", gameRegistry.getRunningGamesCount());
                     try {
                         Thread.sleep(10000);
                     } catch (final InterruptedException ignored) {
@@ -126,8 +126,8 @@ public class Launcher implements ApplicationRunner {
             } catch (final ExecutionException | InterruptedException | TimeoutException e) {
                 log.error("dafuq", e);
             }
-            if (Games.getRunningGamesCount() > 0) {
-                log.warn("Killing {} games while exiting", Games.getRunningGamesCount());
+            if (gameRegistry.getRunningGamesCount() > 0) {
+                log.warn("Killing {} games while exiting", gameRegistry.getRunningGamesCount());
             }
 
             log.info("Shutting down discord logger");

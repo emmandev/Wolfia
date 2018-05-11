@@ -26,9 +26,9 @@ import space.npstr.wolfia.commands.GuildCommandContext;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.db.entities.Setup;
 import space.npstr.wolfia.game.Game;
-import space.npstr.wolfia.game.definitions.Games;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 /**
  * Created by npstr on 24.08.2016
@@ -57,28 +57,19 @@ public class StatusCommand extends BaseCommand {
 
         final GuildCommandContext context = commandContext.requireGuild(false);
         if (context != null) { // find game through guild / textchannel
-            Game game = Games.get(context.textChannel);
-            if (game == null) {
-                //private guild?
-                for (final Game g : Games.getAll().values()) {
-                    if (context.guild.getIdLong() == g.getPrivateGuildId()) {
-                        game = g;
-                        break;
-                    }
-                }
-
-                if (game == null) {
-                    context.reply(Launcher.getBotContext().getDatabase().getWrapper().getOrCreate(Setup.key(context.textChannel.getIdLong()))
-                            .getStatus());
-                    return true;
-                }
+            final Optional<Game> game = getGame(context);
+            if (!game.isPresent()) {
+                context.reply(Launcher.getBotContext().getDatabase().getWrapper().getOrCreate(Setup.key(context.textChannel.getIdLong()))
+                        .getStatus());
+                return true;
             }
-            context.reply(game.getStatus().build());
+
+            context.reply(game.get().getStatus().build());
             return true;
         } else {//handle it being issued in a private channel
             //todo handle a player being part of multiple games properly
             boolean issued = false;
-            for (final Game g : Games.getAll().values()) {
+            for (final Game g : Launcher.getBotContext().getGameRegistry().getAll().values()) {
                 if (g.isUserPlaying(commandContext.invoker)) {
                     commandContext.reply(g.getStatus().build());
                     issued = true;

@@ -223,7 +223,7 @@ public class Mafia extends Game {
         }
 
         // - start the game
-        Games.set(this);
+        Launcher.getBotContext().getGameRegistry().set(this);
         DiscordLogger.getLogger().log("%s `%s` Game started in guild **%s** `%s`, channel **#%s** `%s`, **%s %s %s** players",
                 Emojis.VIDEO_GAME, TextchatUtils.berlinTime(),
                 g.getName(), g.getIdLong(), gameChannel.getName(), gameChannel.getIdLong(),

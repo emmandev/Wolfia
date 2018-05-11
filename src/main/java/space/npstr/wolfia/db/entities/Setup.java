@@ -190,7 +190,7 @@ public class Setup extends SaucedEntity<Long, Setup> {
             return neb.build();
         }
         neb.setTitle("Setup for channel #" + channel.getName());
-        neb.setDescription(Games.get(this.channelId) == null ? "Game has **NOT** started yet." : "Game has started.");
+        neb.setDescription(!Launcher.getBotContext().getGameRegistry().get(this.channelId).isPresent() ? "Game has **NOT** started yet." : "Game has started.");
 
         //games
         final StringBuilder possibleGames = new StringBuilder();
@@ -242,7 +242,7 @@ public class Setup extends SaucedEntity<Long, Setup> {
             }
 
             //is there a game running already in this channel?
-            if (Games.get(this.channelId) != null) {
+            if (Launcher.getBotContext().getGameRegistry().get(this.channelId).isPresent()) {
                 RestActions.sendMessage(channel, TextchatUtils.userAsMention(commandCallerId)
                         + ", there is already a game going on in this channel!");
                 return false;
@@ -270,12 +270,12 @@ public class Setup extends SaucedEntity<Long, Setup> {
                 game.start(this.channelId, getMode(), inned);
             } catch (final UserFriendlyException e) {
                 log.info("Game start aborted due to user friendly exception", e);
-                Games.remove(game);
+                Launcher.getBotContext().getGameRegistry().remove(game);
                 game.cleanUp();
                 throw new UserFriendlyException(e.getMessage(), e);
             } catch (final Exception e) {
                 //start failed with a fucked up exception
-                Games.remove(game);
+                Launcher.getBotContext().getGameRegistry().remove(game);
                 game.cleanUp();
                 throw new RuntimeException(String.format("%s, game start aborted due to:%n%s",
                         TextchatUtils.userAsMention(commandCallerId), e.getMessage()), e);

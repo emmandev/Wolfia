@@ -25,7 +25,6 @@ import space.npstr.wolfia.commands.BaseCommand;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.IOwnerRestricted;
 import space.npstr.wolfia.game.Game;
-import space.npstr.wolfia.game.definitions.Games;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
 
@@ -52,7 +51,7 @@ public class RunningCommand extends BaseCommand implements IOwnerRestricted {
     @Override
     public boolean execute(@Nonnull final CommandContext context) throws IllegalGameStateException {
 
-        final Map<Long, Game> games = Games.getAll();
+        final Map<Long, Game> games = Launcher.getBotContext().getGameRegistry().getAll();
         for (final Game game : games.values()) {
             final EmbedBuilder eb = game.getStatus();
             eb.addBlankField(false);

@@ -20,13 +20,17 @@ package space.npstr.wolfia.commands;
 
 import net.dv8tion.jda.core.entities.User;
 import space.npstr.sqlsauce.DatabaseException;
+import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
+import space.npstr.wolfia.game.Game;
+import space.npstr.wolfia.game.GameRegistry;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -72,5 +76,24 @@ public abstract class BaseCommand {
     @Nonnull
     protected String invocation() {
         return WolfiaConfig.DEFAULT_PREFIX + this.name;
+    }
+
+
+    // returns a game running in the text channel of the context, or that is associated with the private guild if this
+    // command is run from a private guild
+    protected Optional<Game> getGame(final GuildCommandContext context) {
+
+        final GameRegistry gameRegistry = Launcher.getBotContext().getGameRegistry();
+
+        return gameRegistry.get(context.getTextChannel()).or(
+                () -> {
+                    for (final Game g : gameRegistry.getAll().values()) {
+                        if (context.getGuild().getIdLong() == g.getPrivateGuildId()) {
+                            return Optional.of(g);
+                        }
+                    }
+                    return Optional.empty();
+                }
+        );
     }
 }
