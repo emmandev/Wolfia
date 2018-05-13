@@ -19,7 +19,6 @@ package space.npstr.wolfia;
 
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.hooks.EventListener;
 import space.npstr.wolfia.utils.log.LogTheStackException;
 
 import java.util.Optional;
@@ -61,14 +60,4 @@ public class Wolfia {
 
         return tc.get();
     }
-
-    public static void addEventListener(final EventListener eventListener) {
-        Launcher.getBotContext().getDiscordEntityProvider().getShardManager().addEventListener(eventListener);
-    }
-
-    public static void removeEventListener(final EventListener eventListener) {
-        Launcher.getBotContext().getDiscordEntityProvider().getShardManager().removeEventListener(eventListener);
-    }
-
-
 }

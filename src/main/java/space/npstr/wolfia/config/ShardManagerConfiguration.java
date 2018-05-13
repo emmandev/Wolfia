@@ -24,17 +24,8 @@ import net.dv8tion.jda.core.entities.Game;
 import okhttp3.OkHttpClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import space.npstr.sqlsauce.jda.listeners.GuildCachingListener;
-import space.npstr.sqlsauce.jda.listeners.UserMemberCachingListener;
 import space.npstr.wolfia.App;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
-import space.npstr.wolfia.db.Database;
-import space.npstr.wolfia.db.entities.CachedGuild;
-import space.npstr.wolfia.db.entities.CachedUser;
-import space.npstr.wolfia.events.CommandListener;
-import space.npstr.wolfia.events.InternalListener;
-import space.npstr.wolfia.events.WolfiaGuildListener;
-import space.npstr.wolfia.game.AvailablePrivateGuildQueue;
 
 import javax.security.auth.login.LoginException;
 
@@ -47,20 +38,11 @@ public class ShardManagerConfiguration {
 
 
     @Bean(destroyMethod = "") //we manage the lifecycle ourselves tyvm, see shutdown hook in the launcher / wolfia class
-    public ShardManager shardManager(final WolfiaConfig wolfiaConfig, final OkHttpClient.Builder httpClientBuilder,
-                                     final Database database, final CommandListener commandListener,
-                                     final AvailablePrivateGuildQueue availablePrivateGuildQueue,
-                                     final InternalListener internalListener)
+    public ShardManager shardManager(final WolfiaConfig wolfiaConfig, final OkHttpClient.Builder httpClientBuilder)
             throws LoginException {
         return new DefaultShardManagerBuilder()
                 .setToken(wolfiaConfig.getDiscordToken())
                 .setGame(Game.playing(App.GAME_STATUS))
-                .addEventListeners(commandListener)
-                .addEventListeners(availablePrivateGuildQueue.getAll().toArray())
-                .addEventListeners(new UserMemberCachingListener<>(database.getWrapper(), CachedUser.class))
-                .addEventListeners(new GuildCachingListener<>(database.getWrapper(), CachedGuild.class))
-                .addEventListeners(internalListener)
-                .addEventListeners(new WolfiaGuildListener())
                 .setHttpClientBuilder(httpClientBuilder)
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false)

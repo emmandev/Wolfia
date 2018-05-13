@@ -24,7 +24,6 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.wolfia.Launcher;
-import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.CommRegistry;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.ingame.ShootCommand;
@@ -484,7 +483,7 @@ public class Popcorn extends Game {
                             prepareGunDistributionEmbed(options, new HashMap<>(this.votes)).build(),
                             m -> {
                                 options.keySet().forEach(emoji -> m.addReaction(emoji).queue(null, RestActions.defaultOnFail()));
-                                Wolfia.addEventListener(new ReactionListener(m,
+                                Launcher.getBotContext().getListenerRegistry().addListener(new ReactionListener(m,
                                         //filter: only living wolves may vote
                                         Popcorn.this::isLivingWolf,
                                         //on reaction

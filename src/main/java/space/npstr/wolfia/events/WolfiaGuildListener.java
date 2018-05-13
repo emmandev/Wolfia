@@ -22,6 +22,7 @@ import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import org.springframework.stereotype.Component;
 import space.npstr.wolfia.App;
 import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.utils.discord.Emojis;
@@ -33,6 +34,7 @@ import space.npstr.wolfia.utils.discord.RestActions;
  * Handles special events for the official Wolfia guild
  */
 @Slf4j
+@Component
 public class WolfiaGuildListener extends ListenerAdapter {
 
     public static final long SPAM_CHANNEL_ID = 388705267916734465L; //#spam-and-bot-commands

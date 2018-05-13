@@ -25,7 +25,6 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.wolfia.Launcher;
-import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.CommRegistry;
 import space.npstr.wolfia.commands.CommandContext;
 import space.npstr.wolfia.commands.Context;
@@ -762,7 +761,7 @@ public class Mafia extends Game {
 
         RestActions.sendMessage(wolfchatChannel, "Nightkill voting!\n" + String.join(", ", getLivingWolvesMentions()),
                 m -> RestActions.sendMessage(wolfchatChannel, this.nightKillVotingBuilder.getEmbed(this.nightkillVotes).build(), message -> {
-                    Wolfia.addEventListener(new UpdatingReactionListener(message,
+                    Launcher.getBotContext().getListenerRegistry().addListener(new UpdatingReactionListener(message,
                             this::isLivingWolf,
                             __ -> {
                             },//todo move away from using a reaction listener
