@@ -49,7 +49,7 @@ public class GameRegistry {
      * @return game that is running in the specified channel; may return null
      */
     public Optional<Game> get(final long channelId) {
-        return Optional.of(gameRegistry.get(channelId));
+        return Optional.ofNullable(gameRegistry.get(channelId));
     }
 
     public Optional<Game> get(@Nonnull final TextChannel channel) {
