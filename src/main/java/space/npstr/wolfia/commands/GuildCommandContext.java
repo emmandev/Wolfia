@@ -20,8 +20,11 @@ package space.npstr.wolfia.commands;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.TextChannel;
+import space.npstr.annotations.FieldsAreNonNullByDefault;
+import space.npstr.annotations.ParametersAreNonnullByDefault;
+import space.npstr.annotations.ReturnTypesAreNonNullByDefault;
 
-import javax.annotation.Nonnull;
+import java.util.Optional;
 
 /**
  * Created by napster on 09.12.17.
@@ -30,35 +33,40 @@ import javax.annotation.Nonnull;
  * Same rules as for the CommandContext, don't save these or hold on to these for an extended period of time as it
  * holds direct references to the entities.
  */
+@FieldsAreNonNullByDefault
+@ParametersAreNonnullByDefault
+@ReturnTypesAreNonNullByDefault
 public class GuildCommandContext extends CommandContext {
 
-    @Nonnull
     public final Guild guild;
-    @Nonnull
     public final Member member;
-    @Nonnull
     public final TextChannel textChannel;
 
 
-    @Nonnull
     @Override
-    public Guild getGuild() {
+    public Optional<Guild> getGuild() {
+        return Optional.of(this.guild);
+    }
+
+    @Override
+    public Optional<Member> getMember() {
+        return Optional.of(this.member);
+    }
+
+    public Guild fetchGuild() {
         return this.guild;
     }
 
-    @Nonnull
-    @Override
-    public Member getMember() {
+    public Member fetchMember() {
         return this.member;
     }
 
-    @Nonnull
     public TextChannel getTextChannel() {
         return this.textChannel;
     }
 
-    public GuildCommandContext(@Nonnull final CommandContext context, @Nonnull final Guild guild,
-                               @Nonnull final Member member, @Nonnull final TextChannel textChannel) {
+    public GuildCommandContext(final CommandContext context, final Guild guild, final Member member,
+                               final TextChannel textChannel) {
         super(context.event, context.trigger, context.args, context.rawArgs, context.command);
         this.guild = guild;
         this.member = member;

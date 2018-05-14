@@ -22,34 +22,34 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import space.npstr.sqlsauce.entities.discord.DiscordUser;
+import space.npstr.annotations.FieldsAreNonNullByDefault;
+import space.npstr.annotations.ParametersAreNonnullByDefault;
+import space.npstr.annotations.ReturnTypesAreNonNullByDefault;
 import space.npstr.wolfia.App;
-import space.npstr.wolfia.Launcher;
 
 import javax.annotation.CheckReturnValue;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /**
  * Created by napster on 16.11.17.
  * <p>
  * Contexts intended for fast usage, dont save these in any kind of variables
  */
-public class MessageContext extends Context {
+@FieldsAreNonNullByDefault
+@ParametersAreNonnullByDefault
+@ReturnTypesAreNonNullByDefault
+public class MessageContext implements Context {
 
-    //@formatter:off
-    @Nonnull public final MessageChannel channel;
-    @Nonnull public final User invoker;
-    @Nonnull public final Message msg;
-    @Nonnull public final MessageReceivedEvent event;
-    @Nonnull public final JDA jda;
-    //@formatter:on
+    public final MessageChannel channel;
+    public final User invoker;
+    public final Message msg;
+    public final MessageReceivedEvent event;
+    public final JDA jda;
 
 
-    public MessageContext(@Nonnull final MessageReceivedEvent event) {
+    public MessageContext(final MessageReceivedEvent event) {
         this.channel = event.getChannel();
         this.invoker = event.getAuthor();
         this.msg = event.getMessage();
@@ -59,93 +59,33 @@ public class MessageContext extends Context {
 
 
     @Override
-    @Nonnull
     @CheckReturnValue
     public MessageChannel getChannel() {
         return this.channel;
     }
 
     @Override
-    @Nonnull
     @CheckReturnValue
     public User getInvoker() {
         return this.invoker;
     }
 
     @Override
-    @Nonnull
     @CheckReturnValue
     public Message getMessage() {
         return this.msg;
     }
 
     @Override
-    @Nonnull
     @CheckReturnValue
-    public MessageReceivedEvent getEvent() {
-        return this.event;
+    public Optional<Guild> getGuild() {
+        return Optional.ofNullable(this.event.getGuild());
     }
 
     @Override
-    @Nonnull
     @CheckReturnValue
-    public JDA getJda() {
-        return this.jda;
-    }
-
-    @Override
-    @Nullable
-    @CheckReturnValue
-    public Guild getGuild() {
-        return this.event.getGuild();
-    }
-
-    @Override
-    @Nullable
-    @CheckReturnValue
-    public Member getMember() {
-        return this.event.getMember();
-    }
-
-    @Nonnull
-    @CheckReturnValue
-    public String getMyOwnNick() {
-        final Guild g = getGuild();
-        if (g != null) {
-            return g.getSelfMember().getEffectiveName();
-        } else {
-            return this.jda.getSelfUser().getName();
-        }
-    }
-
-    //name or nickname of the invoker issuing the command
-    @Nonnull
-    @CheckReturnValue
-    public String getEffectiveName() {
-        if (this.channel instanceof TextChannel) {
-            final Member member = ((TextChannel) this.channel).getGuild().getMember(this.invoker);
-            if (member != null) {
-                return member.getEffectiveName();
-            }
-        }
-        return this.invoker.getName();
-    }
-
-    @Nonnull
-    @CheckReturnValue
-    //nickname of the member entity of the provided user id in this guild or their user name or a default value
-    public String getEffectiveName(final long userId) {
-        final Guild g = getGuild();
-        if (g != null) {
-            final Member member = g.getMemberById(userId);
-            if (member != null) {
-                return member.getEffectiveName();
-            }
-        }
-        //fallback to global user lookup
-        return Launcher.getBotContext().getDiscordEntityProvider().getUserById(userId)
-                .map(User::getName)
-                .orElse(DiscordUser.UNKNOWN_NAME); //todo db lookup
+    public Optional<Member> getMember() {
+        return Optional.ofNullable(this.event.getMember());
     }
 
     /**

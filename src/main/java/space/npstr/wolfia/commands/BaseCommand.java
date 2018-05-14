@@ -88,7 +88,7 @@ public abstract class BaseCommand {
         return gameRegistry.get(context.getTextChannel()).or(
                 () -> {
                     for (final Game g : gameRegistry.getAll().values()) {
-                        if (context.getGuild().getIdLong() == g.getPrivateGuildId()) {
+                        if (context.fetchGuild().getIdLong() == g.getPrivateGuildId()) {
                             return Optional.of(g);
                         }
                     }

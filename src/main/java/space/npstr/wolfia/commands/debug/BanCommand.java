@@ -74,7 +74,7 @@ public class BanCommand extends BaseCommand implements IOwnerRestricted {
                         String result = ban.getId() + " " + TextchatUtils.userAsMention(ban.getId()) + " ";
                         try {
                             CachedUser user = CachedUser.load(ban.getId());
-                            result += user.getEffectiveName(context.getGuild(), globalUserLookup);
+                            result += user.getEffectiveName(context.getGuild().orElse(null), globalUserLookup);
                         } catch (DatabaseException e) {
                             log.error("Db exploded looking up a use of id {}", ban.getId(), e);
                         }
@@ -124,12 +124,12 @@ public class BanCommand extends BaseCommand implements IOwnerRestricted {
         if (action == BanAction.ADD) {
             Launcher.getBotContext().getDatabase().getWrapper().findApplyAndMerge(Ban.key(userId), ban -> ban.setScope(Scope.GLOBAL));
             context.replyWithMention(String.format("added **%s** (%s) to the global ban list.",
-                    CachedUser.load(userId).getEffectiveName(context.getGuild(), globalUserLookup), TextchatUtils.userAsMention(userId)));
+                    CachedUser.load(userId).getEffectiveName(context.getGuild().orElse(null), globalUserLookup), TextchatUtils.userAsMention(userId)));
             return true;
         } else { //removing
             Launcher.getBotContext().getDatabase().getWrapper().findApplyAndMerge(Ban.key(userId), ban -> ban.setScope(Scope.NONE));
             context.replyWithMention(String.format("removed **%s** (%s) from the global ban list.",
-                    CachedUser.load(userId).getEffectiveName(context.getGuild(), globalUserLookup), TextchatUtils.userAsMention(userId)));
+                    CachedUser.load(userId).getEffectiveName(context.getGuild().orElse(null), globalUserLookup), TextchatUtils.userAsMention(userId)));
             return true;
         }
     }

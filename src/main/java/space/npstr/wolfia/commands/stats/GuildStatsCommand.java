@@ -25,6 +25,7 @@ import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 import space.npstr.wolfia.utils.StatsProvider;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 /**
  * Created by napster on 10.06.17.
@@ -61,13 +62,12 @@ public class GuildStatsCommand extends BaseCommand {
             }
         }
 
-        final Guild guild = context.getGuild();
-        if (guild == null) {
+        final Optional<Guild> guild = context.getGuild();
+        if (!guild.isPresent()) {
             context.help();
             return false;
         }
-        
-        final long guildId = context.getGuild().getIdLong();
+        final long guildId = guild.get().getIdLong();
         context.reply(StatsProvider.getGuildStats(guildId).build());
         return true;
     }

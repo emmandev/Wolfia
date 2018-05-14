@@ -18,6 +18,7 @@
 package space.npstr.wolfia.commands.debug;
 
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.core.entities.Guild;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.commands.BaseCommand;
@@ -32,6 +33,7 @@ import javax.annotation.Nonnull;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -126,14 +128,15 @@ public class EvalCommand extends BaseCommand implements IOwnerRestricted {
 
         final String finalSource = source.trim();
 
+        final Optional<Guild> guild = context.getGuild();
         this.engine.put("context", context);
         this.engine.put("jda", context.invoker.getJDA());
         this.engine.put("channel", context.channel);
         this.engine.put("author", context.invoker);
         this.engine.put("bot", context.invoker.getJDA().getSelfUser());
-        this.engine.put("member", context.getGuild() != null ? context.getGuild().getSelfMember() : null);
+        this.engine.put("member", guild.map(Guild::getSelfMember).orElse(null));
         this.engine.put("message", context.msg);
-        this.engine.put("guild", context.getGuild());
+        this.engine.put("guild", guild.orElse(null));
         this.engine.put("game", Launcher.getBotContext().getGameRegistry().get(context.channel.getIdLong()).orElse(null));
         this.engine.put("setup", Launcher.getBotContext().getDatabase().getWrapper().getOrCreate(Setup.key(context.channel.getIdLong())));
         this.engine.put("games", Games.class);//access the static methods like this from eval: games.static.myStaticMethod()

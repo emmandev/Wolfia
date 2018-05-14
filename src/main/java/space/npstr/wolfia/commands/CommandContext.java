@@ -24,12 +24,14 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import space.npstr.annotations.FieldsAreNonNullByDefault;
+import space.npstr.annotations.ParametersAreNonnullByDefault;
+import space.npstr.annotations.ReturnTypesAreNonNullByDefault;
 import space.npstr.sqlsauce.DatabaseException;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 import space.npstr.wolfia.game.exceptions.IllegalGameStateException;
 import space.npstr.wolfia.utils.discord.RestActions;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -42,16 +44,17 @@ import java.util.regex.Pattern;
  * Don't save these anywhere as they hold references to JDA objects, just pass them down through (short-lived) command execution
  */
 @Slf4j
+@FieldsAreNonNullByDefault
+@ParametersAreNonnullByDefault
+@ReturnTypesAreNonNullByDefault
 public class CommandContext extends MessageContext {
 
 
-    //@formatter:off
-    @Nonnull public final String trigger;                        // the command trigger, e.g. "play", or "p", or "pLaY", whatever the user typed
-    @Nonnull public final String[] args ;                        // the arguments split by whitespace, excluding prefix and trigger
-    @Nonnull public final String rawArgs;                        // raw arguments excluding prefix and trigger, trimmed
-    @Nonnull public final BaseCommand command;
-//    @Nonnull private final Histogram.Timer received;             // time when we received this command
-    //@formatter:on
+    public final String trigger;                        // the command trigger, e.g. "play", or "p", or "pLaY", whatever the user typed
+    public final String[] args;                         // the arguments split by whitespace, excluding prefix and trigger
+    public final String rawArgs;                        // raw arguments excluding prefix and trigger, trimmed
+    public final BaseCommand command;
+//    private final Histogram.Timer received;             // time when we received this command
 
     /**
      * @param event
@@ -59,6 +62,7 @@ public class CommandContext extends MessageContext {
      *
      * @return The full context for the triggered command, or null if it's not a command that we know.
      */
+    @Nullable
     public static CommandContext parse(final MessageReceivedEvent event)//, final Histogram.Timer received)
             throws DatabaseException {
 
@@ -98,9 +102,9 @@ public class CommandContext extends MessageContext {
         }
     }
 
-    protected CommandContext(@Nonnull final MessageReceivedEvent event, @Nonnull final String trigger,
-                             @Nonnull final String[] args, @Nonnull final String rawArgs, @Nonnull final BaseCommand command) {
-//                           @Nonnull final Histogram.Timer received) {
+    protected CommandContext(final MessageReceivedEvent event, final String trigger, final String[] args,
+                             final String rawArgs, final BaseCommand command) {
+//                             final Histogram.Timer received) {
         super(event);
         this.trigger = trigger;
         this.args = args;
@@ -145,7 +149,7 @@ public class CommandContext extends MessageContext {
      * @return a GuildCommandContext if this command was issued in a guild, null otherwise
      */
     @Nullable
-    public GuildCommandContext requireGuild(@Nonnull final boolean... answerUser) {
+    public GuildCommandContext requireGuild(final boolean... answerUser) {
         if (this.channel.getType() == ChannelType.TEXT) {
             final TextChannel tc = (TextChannel) this.channel;
             final Guild g = tc.getGuild();

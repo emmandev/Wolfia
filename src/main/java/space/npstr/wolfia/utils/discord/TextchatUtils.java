@@ -229,21 +229,18 @@ public class TextchatUtils {
     }
 
     @Nonnull
+    public static Message prefaceWithName(@Nonnull final String name, @Nonnull final String msg, final boolean escape) {
+        return prefaceWithString(escape ? escapeMarkdown(name) : name, msg);
+    }
+
+    @Nonnull
     public static Message prefaceWithName(@Nonnull final User user, @Nonnull final String msg, final boolean escape) {
-        String name = user.getName();
-        if (escape) {
-            name = escapeMarkdown(name);
-        }
-        return prefaceWithString(name, msg);
+        return prefaceWithName(user.getName(), msg, escape);
     }
 
     @Nonnull
     public static Message prefaceWithName(@Nonnull final Member member, @Nonnull final String msg, final boolean escape) {
-        String name = member.getEffectiveName();
-        if (escape) {
-            name = escapeMarkdown(name);
-        }
-        return prefaceWithString(name, msg);
+        return prefaceWithName(member.getEffectiveName(), msg, escape);
     }
 
     @Nonnull
