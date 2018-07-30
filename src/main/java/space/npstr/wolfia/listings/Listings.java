@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia.listings;
 
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.events.ReadyEvent;
@@ -44,9 +43,10 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * Takes care of posting all our stats to various listing sites
  */
-@Slf4j
 @Component
 public class Listings extends ListenerAdapter {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Listings.class);
 
     //serves as both a set of registered listings and keeping track of ongoing tasks of posting stats
     private final Map<Listing, Future> tasks = new HashMap<>();

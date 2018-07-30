@@ -18,7 +18,6 @@
 package space.npstr.wolfia;
 
 import ch.qos.logback.classic.LoggerContext;
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDAInfo;
 import org.slf4j.LoggerFactory;
@@ -52,7 +51,6 @@ import java.util.concurrent.TimeoutException;
 /**
  * Created by napster on 10.05.18.
  */
-@Slf4j
 @SpringBootApplication
 @EnableAutoConfiguration(exclude = { //we handle these ourselves
         DataSourceAutoConfiguration.class,
@@ -61,6 +59,8 @@ import java.util.concurrent.TimeoutException;
         FlywayAutoConfiguration.class
 })
 public class Launcher implements ApplicationRunner {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Launcher.class);
 
     @SuppressWarnings("NullableProblems")
     private static volatile BotContext botContext;

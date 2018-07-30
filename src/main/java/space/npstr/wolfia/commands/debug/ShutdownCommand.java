@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia.commands.debug;
 
-import lombok.extern.slf4j.Slf4j;
 import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.Wolfia;
 import space.npstr.wolfia.commands.BaseCommand;
@@ -32,8 +31,9 @@ import javax.annotation.Nonnull;
 /**
  * Created by napster on 21.06.17.
  */
-@Slf4j
 public class ShutdownCommand extends BaseCommand implements IOwnerRestricted {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ShutdownCommand.class);
 
     public static final int EXIT_CODE_SHUTDOWN = 0;
     //this is treated as an error code basically, so as long as whatever tool we are using to run the bot restarts it on

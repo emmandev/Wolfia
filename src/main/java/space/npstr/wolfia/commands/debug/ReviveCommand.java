@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia.commands.debug;
 
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import space.npstr.sqlsauce.DatabaseException;
@@ -32,8 +31,9 @@ import javax.annotation.Nonnull;
 /**
  * Created by napster on 19.11.17.
  */
-@Slf4j
 public class ReviveCommand extends BaseCommand implements IOwnerRestricted {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReviveCommand.class);
 
     public ReviveCommand(@Nonnull final String trigger, @Nonnull final String... aliases) {
         super(trigger, aliases);

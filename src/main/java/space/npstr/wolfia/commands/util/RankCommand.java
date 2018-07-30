@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia.commands.util;
 
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.entities.Role;
 import space.npstr.wolfia.App;
 import space.npstr.wolfia.commands.BaseCommand;
@@ -35,8 +34,9 @@ import javax.annotation.Nonnull;
  * <p>
  * Allows users to add / remove special roles in the Wolfia Lounge
  */
-@Slf4j
 public class RankCommand extends BaseCommand {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RankCommand.class);
 
     public RankCommand(@Nonnull final String name, @Nonnull final String... aliases) {
         super(name, aliases);

@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia.events;
 
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.events.ReadyEvent;
 import net.dv8tion.jda.core.events.channel.text.TextChannelDeleteEvent;
@@ -40,9 +39,10 @@ import java.util.Optional;
  * <p>
  * Events listened to in here are used for bot internal, non-game purposes
  */
-@Slf4j
 @Component
 public class InternalListener extends ListenerAdapter {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(InternalListener.class);
 
     private final GameRegistry gameRegistry;
 

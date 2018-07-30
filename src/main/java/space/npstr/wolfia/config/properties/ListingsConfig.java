@@ -17,8 +17,6 @@
 
 package space.npstr.wolfia.config.properties;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -29,14 +27,31 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("listings")
 public class ListingsConfig {
 
-    @Getter
-    @Setter
     private String dblToken = "";
-    @Getter
-    @Setter
     private String botsPwToken = "";
-    @Getter
-    @Setter
     private String carbonitexKey = "";
 
+    public String getDblToken() {
+        return dblToken;
+    }
+
+    public void setDblToken(final String dblToken) {
+        this.dblToken = dblToken;
+    }
+
+    public String getBotsPwToken() {
+        return botsPwToken;
+    }
+
+    public void setBotsPwToken(final String botsPwToken) {
+        this.botsPwToken = botsPwToken;
+    }
+
+    public String getCarbonitexKey() {
+        return carbonitexKey;
+    }
+
+    public void setCarbonitexKey(final String carbonitexKey) {
+        this.carbonitexKey = carbonitexKey;
+    }
 }

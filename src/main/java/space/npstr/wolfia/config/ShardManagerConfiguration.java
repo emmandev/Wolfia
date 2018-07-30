@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia.config;
 
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.entities.Game;
@@ -32,7 +31,6 @@ import javax.security.auth.login.LoginException;
 /**
  * Created by napster on 11.05.18.
  */
-@Slf4j
 @Configuration
 public class ShardManagerConfiguration {
 

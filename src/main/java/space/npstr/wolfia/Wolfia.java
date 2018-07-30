@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia;
 
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.entities.TextChannel;
 import space.npstr.wolfia.utils.log.LogTheStackException;
 
@@ -30,8 +29,9 @@ import java.util.Optional;
  * //general list of todos etc
  * //todo rename role pm/dm -> rolecard
  */
-@Slf4j
 public class Wolfia {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Wolfia.class);
 
     public static final Thread.UncaughtExceptionHandler uncaughtExceptionHandler
             = (t, e) -> log.error("Uncaught exception in thread {}", t.getName(), e);

@@ -17,8 +17,6 @@
 
 package space.npstr.wolfia.config.properties;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -29,8 +27,13 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("database")
 public class DatabaseConfig {
 
-    @Getter
-    @Setter
     private String jdbcUrl = "";
 
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
+
+    public void setJdbcUrl(final String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
+    }
 }

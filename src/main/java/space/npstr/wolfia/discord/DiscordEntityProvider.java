@@ -18,7 +18,6 @@
 package space.npstr.wolfia.discord;
 
 import com.google.common.base.Suppliers;
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Guild;
@@ -34,9 +33,10 @@ import java.util.function.Supplier;
 /**
  * Created by napster on 11.05.18.
  */
-@Slf4j
 @Component
 public class DiscordEntityProvider {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DiscordEntityProvider.class);
 
     private final Supplier<ShardManager> lazyShardManager;
 

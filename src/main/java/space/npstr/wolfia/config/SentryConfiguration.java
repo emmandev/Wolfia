@@ -22,7 +22,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.filter.ThresholdFilter;
 import io.sentry.Sentry;
 import io.sentry.logback.SentryAppender;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -32,9 +31,10 @@ import space.npstr.wolfia.utils.GitRepoState;
 /**
  * Created by napster on 11.05.18.
  */
-@Slf4j
 @Configuration
 public class SentryConfiguration {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SentryConfiguration.class);
 
     private static final String SENTRY_APPENDER_NAME = "SENTRY";
 

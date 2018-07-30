@@ -17,8 +17,6 @@
 
 package space.npstr.wolfia.config.properties;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -31,19 +29,35 @@ public class WolfiaConfig {
 
     public static final String DEFAULT_PREFIX = "w.";
 
-    @Getter
-    @Setter
     private boolean debug = true;
-
-    @Getter
-    @Setter
     private String discordToken = "";
-
-    @Getter
-    @Setter
     private long logChannelId = 0;
 
     public String getDefaultPrefix() {
         return isDebug() ? "d." : DEFAULT_PREFIX;
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public void setDebug(final boolean debug) {
+        this.debug = debug;
+    }
+
+    public String getDiscordToken() {
+        return discordToken;
+    }
+
+    public void setDiscordToken(final String discordToken) {
+        this.discordToken = discordToken;
+    }
+
+    public long getLogChannelId() {
+        return logChannelId;
+    }
+
+    public void setLogChannelId(final long logChannelId) {
+        this.logChannelId = logChannelId;
     }
 }

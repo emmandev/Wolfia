@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia.game.tools;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import space.npstr.wolfia.Wolfia;
 
@@ -30,9 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by napster on 11.05.18.
  */
-@Slf4j
 @Component
 public class Scheduler {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Scheduler.class);
 
     private final ScheduledThreadPoolExecutor scheduler;
 

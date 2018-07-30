@@ -17,7 +17,6 @@
 
 package space.npstr.wolfia.game;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import space.npstr.wolfia.db.Database;
 import space.npstr.wolfia.db.entities.PrivateGuild;
@@ -32,9 +31,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  * <p>
  * Manage available private guilds
  */
-@Slf4j
 @Component
 public class AvailablePrivateGuildQueue {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AvailablePrivateGuildQueue.class);
 
     private final LinkedBlockingQueue<PrivateGuild> queue = new LinkedBlockingQueue<>();
 

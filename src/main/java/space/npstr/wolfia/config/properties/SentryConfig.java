@@ -17,8 +17,6 @@
 
 package space.npstr.wolfia.config.properties;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -29,8 +27,13 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("sentry")
 public class SentryConfig {
 
-    @Getter
-    @Setter
     private String dsn = "";
 
+    public String getDsn() {
+        return dsn;
+    }
+
+    public void setDsn(final String dsn) {
+        this.dsn = dsn;
+    }
 }
