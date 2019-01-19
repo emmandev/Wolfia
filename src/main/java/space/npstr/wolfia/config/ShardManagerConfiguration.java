@@ -20,6 +20,7 @@ package space.npstr.wolfia.config;
 import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.entities.Game;
+import net.dv8tion.jda.core.utils.cache.CacheFlag;
 import okhttp3.OkHttpClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,7 @@ import space.npstr.wolfia.App;
 import space.npstr.wolfia.config.properties.WolfiaConfig;
 
 import javax.security.auth.login.LoginException;
+import java.util.EnumSet;
 
 /**
  * Created by napster on 11.05.18.
@@ -42,6 +44,7 @@ public class ShardManagerConfiguration {
                 .setToken(wolfiaConfig.getDiscordToken())
                 .setGame(Game.playing(App.GAME_STATUS))
                 .setHttpClientBuilder(httpClientBuilder)
+                .setDisabledCacheFlags(EnumSet.of(CacheFlag.GAME, CacheFlag.VOICE_STATE))
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false)
                 .build();
