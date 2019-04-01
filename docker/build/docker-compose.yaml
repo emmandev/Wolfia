@@ -1,0 +1,16 @@
+# Required dependencies to build
+# Do 
+#   export MIGRATION_JDBC="jdbc:postgresql://localhost:5434/migration?user=migration"
+# before running gradle build commands
+
+version: '3.7'
+
+services:
+  postgres:
+    image: napstr/wolfia-postgres:master
+    restart: always
+    ports:
+      - 127.0.0.1:5434:5432
+    environment:
+      - ROLE=migration
+      - DB=migration

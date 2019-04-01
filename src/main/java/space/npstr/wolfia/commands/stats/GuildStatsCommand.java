@@ -66,7 +66,7 @@ public class GuildStatsCommand extends BaseCommand {
             context.help();
             return false;
         }
-        
+
         final long guildId = context.getGuild().getIdLong();
         context.reply("This command has been temporarily disabled. It may or may not come back in the future.");
 //        context.reply(StatsProvider.getGuildStats(guildId).build());  TODO enable again after StatsProvider has been rewritten

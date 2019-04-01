@@ -38,6 +38,13 @@ public interface DiscordEntityProvider {
     @CheckReturnValue
     Optional<DiscordTextChannel> getTextChannelById(long channelId);
 
+    /**
+     * Providing the guild id additionally if it is known at lookup time can speed up lookups compared to
+     * {@link DiscordEntityProvider#getTextChannelById(long)}
+     */
+    @CheckReturnValue
+    Optional<DiscordTextChannel> getTextChannelById(long channelId, long guildId);
+
     @CheckReturnValue
     Optional<DiscordPrivateChannel> getPrivateChannelById(long channelId);
 

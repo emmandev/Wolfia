@@ -31,6 +31,8 @@ import space.npstr.sqlsauce.entities.IEntity;
 import space.npstr.sqlsauce.fp.types.EntityKey;
 import space.npstr.wolfia.Launcher;
 import space.npstr.wolfia.Wolfia;
+import space.npstr.wolfia.discordwrapper.DiscordEntityProvider;
+import space.npstr.wolfia.discordwrapper.entity.DiscordGuild;
 import space.npstr.wolfia.utils.discord.RestActions;
 import space.npstr.wolfia.utils.discord.RoleAndPermissionUtils;
 import space.npstr.wolfia.utils.discord.TextchatUtils;
@@ -45,6 +47,7 @@ import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -246,8 +249,10 @@ public class PrivateGuild extends ListenerAdapter implements IEntity<Long, Priva
     // the main feature being the @Nonnull return contract, over the @Nullable contract of looking the entity up in JDA
     @Nonnull
     private Guild fetchThisGuild() {
-        Guild g = Wolfia.getGuildById(this.guildId);
-        while (g == null) {
+        DiscordEntityProvider discordEntityProvider = Launcher.getBotContext().getDiscordEntityProvider();
+        Optional<DiscordGuild> g = discordEntityProvider.getGuildById(this.guildId);
+
+        while (g.isEmpty()) {
             log.error("Could not find private guild #{} with id {}, trying in a moment",
                     this.number, this.guildId, new LogTheStackException());
             try {
@@ -255,8 +260,8 @@ public class PrivateGuild extends ListenerAdapter implements IEntity<Long, Priva
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            g = Wolfia.getGuildById(this.guildId);
+            g = discordEntityProvider.getGuildById(this.guildId);
         }
-        return g;
+        return g.get();
     }
 }

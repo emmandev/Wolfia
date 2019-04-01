@@ -19,7 +19,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
 /**
- * Created by napster on 05.05.18.
+ * JDA implementation of the entity provider
  */
 public class JdaDiscordEntityProvider implements DiscordEntityProvider {
 
@@ -94,6 +94,14 @@ public class JdaDiscordEntityProvider implements DiscordEntityProvider {
     @CheckReturnValue
     public Optional<DiscordTextChannel> getTextChannelById(long channelId) {
         return Optional.ofNullable(this.shardManager.getTextChannelById(channelId))
+                .map(DiscordTextChannel::from);
+    }
+
+    @Override
+    @CheckReturnValue
+    public Optional<DiscordTextChannel> getTextChannelById(long channelId, long guildId) {
+        return Optional.ofNullable(this.shardManager.getGuildById(guildId))
+                .flatMap(guild -> Optional.ofNullable(guild.getTextChannelById(channelId)))
                 .map(DiscordTextChannel::from);
     }
 
