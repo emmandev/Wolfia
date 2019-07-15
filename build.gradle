@@ -270,14 +270,15 @@ bintray {
 //returns the last git tag (that needs to be in the form of MAJOR.MINOR.PATCH) and the build number
 //@SuppressWarnings("GrMethodMayBeStatic")
 String versionTag() {
-    def matcher = /^([0-9]+\.[0-9]+\.[0-9]+).*$/
-    def match = ("${grgit.describe()}" =~ matcher)[0]
+    // def matcher = /^([0-9]+\.[0-9]+\.[0-9]+).*$/
+    // def match = ("${grgit.describe()}" =~ matcher)[0]
 
-    //noinspection GroovyAssignabilityCheck
-    def result = match[1]
-    result += '-'
-    result += project.ext.buildNumber
+    // //noinspection GroovyAssignabilityCheck
+    // def result = match[1]
+    // result += '-'
+    // result += project.ext.buildNumber
 
-    println("Version: " + result)
+    // println("Version: " + result)
+    result = 'test'
     return result
 }
