@@ -279,6 +279,6 @@ String versionTag() {
     // result += project.ext.buildNumber
 
     // println("Version: " + result)
-    result = 'test'
+    def result = 'test'
     return result
 }
